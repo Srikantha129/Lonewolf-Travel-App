@@ -1,0 +1,62 @@
+{
+  "project_info": {
+    "project_number": "813813682916",
+    "project_id": "lonewolf-67cb0",
+    "storage_bucket": "lonewolf-67cb0.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:813813682916:android:8c631a51c3c95f0fafd2f1",
+        "android_client_info": {
+          "package_name": "com.lonewolf.lonewolf"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "813813682916-hh5epklohs1p4rjpvlslp7fra8ssnm7q.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.lonewolf.lonewolf",
+            "certificate_hash": "fee3254ff0d367de59879a0b7a9155bd666ba219"
+          }
+        },
+        {
+          "client_id": "813813682916-omfdpparqu4ppgcfhs7pae9ikps0oktb.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.lonewolf.lonewolf",
+            "certificate_hash": "2822d21b09ee12ea5416443073d7af584fc03639"
+          }
+        },
+        {
+          "client_id": "813813682916-0drmrvghamdnbtp9e9q3j3murmicc3v7.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBVPAyDDmv3dd48r3a_-rEIT2RRxnnezIg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "813813682916-0drmrvghamdnbtp9e9q3j3murmicc3v7.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "813813682916-looke9hgrh4h77qs5irafahk8gldnjjc.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.lonewolf.lonewolf"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
