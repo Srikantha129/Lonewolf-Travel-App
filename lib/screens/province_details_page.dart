@@ -79,11 +79,17 @@ class _ProvinceDetailsPageState extends State<ProvinceDetailsPage> {
                       child: PageView.builder(
                         itemCount: imagePaths.length,
                         itemBuilder: (context, index) {
-                          return Image.network(
+                          return Image.asset(
                             imagePaths[index],
                             fit: BoxFit.cover,
                             width: double.infinity,
                           );
+
+                         /* return Image.network(
+                            imagePaths[index],
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                          );*/
                         },
                       ),
                     ),
