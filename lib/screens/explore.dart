@@ -1,17 +1,20 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'province_details_page.dart';
+import 'package:lonewolf/screens/personalize_route.dart';
+import 'package:lonewolf/screens/province_details_page.dart';
 import '../models/Province.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import '../services/journey_db_service.dart';
 
 class ExplorePage extends StatefulWidget {
-  const ExplorePage({super.key});
+  final User loggedUser;
+  const ExplorePage({super.key, required this.loggedUser});
 
   @override
-  _ExplorePageState createState() => _ExplorePageState();
+  ExplorePageState createState() => ExplorePageState();
 }
 
-class _ExplorePageState extends State<ExplorePage> {
+class ExplorePageState extends State<ExplorePage> {
   List<Province> provinces = [];
 
   @override
@@ -21,9 +24,11 @@ class _ExplorePageState extends State<ExplorePage> {
   }
 
   void _fetchProvinces() async {
-    QuerySnapshot snapshot = await FirebaseFirestore.instance.collection('provinze').get();
+    QuerySnapshot snapshot =
+        await FirebaseFirestore.instance.collection('provinze').get();
     setState(() {
-      provinces = snapshot.docs.map((doc) => Province.fromDocument(doc)).toList();
+      provinces =
+          snapshot.docs.map((doc) => Province.fromDocument(doc)).toList();
     });
   }
 
@@ -36,29 +41,31 @@ class _ExplorePageState extends State<ExplorePage> {
       body: provinces.isEmpty
           ? const Center(child: CircularProgressIndicator())
           : ListView.separated(
-        padding: const EdgeInsets.all(10.0),
-        itemCount: provinces.length,
-        itemBuilder: (context, index) {
-          final province = provinces[index];
-          return InkWell(
-            onTap: () {
-              // Navigate to the province details page
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => ProvinceDetailsPage(province: province.name),
-                ),
-              );
-            },
-            child: CityCard(
-              cityName: province.name,
-              cityImage: province.imageUrl,
-              provinceDescription: province.description,
+              padding: const EdgeInsets.all(10.0),
+              itemCount: provinces.length,
+              itemBuilder: (context, index) {
+                final province = provinces[index];
+                return InkWell(
+                  onTap: () {
+                    // Navigate to the province details page
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            ProvinceDetailsPage(province: province.name),
+                      ),
+                    );
+                  },
+                  child: CityCard(
+                    cityName: province.name,
+                    cityImage: province.imageUrl,
+                    provinceDescription: province.description,
+                  ),
+                );
+              },
+              separatorBuilder: (context, index) =>
+                  const SizedBox(height: 10.0),
             ),
-          );
-        },
-        separatorBuilder: (context, index) => const SizedBox(height: 10.0),
-      ),
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
@@ -66,14 +73,65 @@ class _ExplorePageState extends State<ExplorePage> {
             label: 'Home',
           ),
           BottomNavigationBarItem(
+            icon: Icon(Icons.add),
+            label: 'Plan Your Adventure',
+          ),
+          BottomNavigationBarItem(
             icon: Icon(Icons.explore),
             label: 'Explore',
           ),
         ],
-        currentIndex: 1,
-        onTap: (int index) {
-          if (index == 0) {
-            Navigator.pop(context); // Navigate back
+        currentIndex: 0,
+        onTap: (int index) async {
+          switch (index) {
+            case 0:
+              break;
+            case 1:
+              if (await JourneyDbService()
+                  .isExistsByEmail(widget.loggedUser.email.toString())) {
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title:
+                          const Text('Your Current Journey will be Deleted !!'),
+                      content: const Text('Are you sure you want to delete?'),
+                      actions: [
+                        TextButton(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                          child: const Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () async {
+                            await JourneyDbService().deleteJourneyByEmail(
+                                widget.loggedUser.email.toString());
+                            Navigator.of(context).pop();
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => PersonalizeRoute(
+                                      loggedUser: widget.loggedUser)),
+                            );
+                          },
+                          child: const Text('Proceed'),
+                        ),
+                      ],
+                    );
+                  },
+                );
+              } else {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) =>
+                          PersonalizeRoute(loggedUser: widget.loggedUser)),
+                );
+              }
+              break;
+            case 2:
+              break;
           }
         },
       ),
@@ -86,7 +144,12 @@ class CityCard extends StatelessWidget {
   final String cityImage;
   final String provinceDescription;
 
-  const CityCard({Key? key, required this.cityName, required this.cityImage, required this.provinceDescription}) : super(key: key);
+  const CityCard(
+      {Key? key,
+      required this.cityName,
+      required this.cityImage,
+      required this.provinceDescription})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -96,7 +159,10 @@ class CityCard extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(10.0),
         boxShadow: [
-          BoxShadow(color: Colors.grey.withOpacity(0.2), spreadRadius: 3.0, blurRadius: 5.0)
+          BoxShadow(
+              color: Colors.grey.withOpacity(0.2),
+              spreadRadius: 3.0,
+              blurRadius: 5.0)
         ],
       ),
       child: ClipRRect(
@@ -111,14 +177,17 @@ class CityCard extends StatelessWidget {
               height: 300.0, // Adjust height as needed
             ),*/
 
-            CachedNetworkImage(
-              imageUrl: cityImage,
+            Image.asset(
+              cityImage,
               fit: BoxFit.cover,
               width: double.infinity,
               height: 300.0,
-              placeholder: (context, url) => Center(child: CircularProgressIndicator()), // Centered placeholder
-              errorWidget: (context, url, error) => Icon(Icons.error),
-              fadeOutDuration: Duration(milliseconds: 500), // Fade in animation
+              // loadingBuilder: (context, loadingProgress, error) {
+              //   if (error != null) {
+              //     return const Icon(Icons.error);
+              //   }
+              //   return Center(child: CircularProgressIndicator(value: loadingProgress?.downloaded / loadingProgress?.total));
+              // },
             ),
 
             // Text with location name - centered
@@ -133,7 +202,8 @@ class CityCard extends StatelessWidget {
                   fontSize: 20.0,
                   fontWeight: FontWeight.bold,
                   shadows: [
-                    Shadow(color: Colors.black.withOpacity(0.5), blurRadius: 2.0)
+                    Shadow(
+                        color: Colors.black.withOpacity(0.5), blurRadius: 2.0)
                   ],
                 ),
                 textAlign: TextAlign.center,
@@ -145,8 +215,8 @@ class CityCard extends StatelessWidget {
               left: 0.0,
               right: 0.0,
               child: Container(
-                padding: EdgeInsets.all(10.0),
-                decoration: BoxDecoration(
+                padding: const EdgeInsets.all(10.0),
+                decoration: const BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.only(
                     bottomLeft: Radius.circular(10.0),
@@ -157,13 +227,14 @@ class CityCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "$cityName", // Replace with a more descriptive title
-                      style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
+                      cityName, // Replace with a more descriptive title
+                      style: const TextStyle(
+                          fontSize: 18.0, fontWeight: FontWeight.bold),
                     ),
-                    SizedBox(height: 5.0),
+                    const SizedBox(height: 5.0),
                     // Text with content related to the province (replace with your data)
                     Text(provinceDescription),
-                    SizedBox(height: 5.0),
+                    const SizedBox(height: 5.0),
                     // Downward pointing triangle (optional) - using ClipPath
                     /*Align(
                       alignment: Alignment.bottomRight,

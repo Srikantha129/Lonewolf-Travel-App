@@ -1,13 +1,14 @@
-
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-
+import 'package:google_fonts/google_fonts.dart'; // Add this for better typography
+import 'package:lonewolf/screens/personalize_route.dart';
+import 'package:lonewolf/screens/view_personalize_route.dart';
+import 'package:lonewolf/services/journey_db_service.dart';
 import '../models/LoneWolfUser.dart';
 import 'blog_page.dart';
 import 'explore.dart';
-
+import 'package:lonewolf/pages/home/home.dart';
 
 class HomePage extends StatefulWidget {
   final User loggedUser;
@@ -46,39 +47,56 @@ class _HomePageState extends State<HomePage> {
           .limit(1)
           .get();
       if (docSnapshot.size > 0) {
-        final userData = docSnapshot.docs.first.data();
         setState(() {
-          user = LoneWolfUser.fromJson(userData);
+          user = LoneWolfUser.fromJson(docSnapshot.docs.first.data());
         });
-      } else {
-        print('User not found in Firestore');
       }
-    } on FirebaseException catch (e) {
+    } catch (e) {
       print('Error fetching user: $e');
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final currentUser = widget.loggedUser;
-
     return Scaffold(
+      backgroundColor: Colors.grey[100],
       appBar: AppBar(
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF00B4DB), Color(0xFF0083B0)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
         centerTitle: true,
         title: Image.asset(
           'assets/images/Logo1.png',
-          height: 30.0,
+          height: 40.0,
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout_outlined),
+            icon: const Icon(Icons.location_on_outlined, color: Colors.white),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) =>
+                    ViewPersonalizeRoute(loggedUser: widget.loggedUser),
+              ),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.logout_outlined, color: Colors.white),
             onPressed: _auth.signOut,
           ),
         ],
       ),
       body: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
           child: FutureBuilder<List<Map<String, dynamic>>>(
             future: _fetchPosts(),
             builder: (context, snapshot) {
@@ -86,7 +104,7 @@ class _HomePageState extends State<HomePage> {
                 final posts = snapshot.data!;
                 return Column(
                   children: posts
-                      .map((post) => _buildBlogCard(post, context))
+                      .map((post) => _buildBlogCard(post,context))
                       .toList(),
                 );
               } else if (snapshot.hasError) {
@@ -96,177 +114,66 @@ class _HomePageState extends State<HomePage> {
               } else {
                 return const Center(child: CircularProgressIndicator());
               }
-              // return Column(
-              //   children: [
-              //     InkWell(
-              //       onTap: () {
-              //         Navigator.push(
-              //           context,
-              //           MaterialPageRoute(
-              //             builder: (context) => BlogPage(
-              //               blogId: "IamIgfW1t8RonVH6taVh",
-              //               loggedUser: currentUser,
-              //             ),
-              //           ),
-              //         );
-              //       },
-              //       child: Card(
-              //         clipBehavior: Clip.antiAliasWithSaveLayer,
-              //         shape: RoundedRectangleBorder(
-              //           borderRadius: BorderRadius.circular(5.0),
-              //         ),
-              //         color: Colors.grey[100],
-              //         elevation: 2.0,
-              //         child: Column(
-              //           children: [
-              //             Image.asset(
-              //               'assets/images/sigiriya1.jpg',
-              //               fit: BoxFit.cover,
-              //               height: 300.0,
-              //               width: double.infinity,
-              //             ),
-              //             Container(
-              //               padding: const EdgeInsets.all(10.0),
-              //               child: const Column(
-              //                 crossAxisAlignment: CrossAxisAlignment.start,
-              //                 children: [
-              //                   Text(
-              //                     'Sri Lanka\'s Lion Rock Fortress Unveiled',
-              //                     style: TextStyle(
-              //                         fontSize: 16.0,
-              //                         fontWeight: FontWeight.bold),
-              //                   ),
-              //                   SizedBox(height: 5.0),
-              //                   Text(
-              //                     'Sigiriya, also known as the "Lion Rock," is a breathtaking historical and archaeological marvel nestled in the heart of Sri Lanka. This UNESCO World Heritage Site boasts a unique combination of nature, culture, and history, captivating travelers worldwide.',
-              //                     style: TextStyle(
-              //                         fontSize: 14.0, color: Colors.black54),
-              //                   ),
-              //                   SizedBox(height: 5.0),
-              //                   Row(
-              //                     children: [
-              //                       Text(
-              //                         '#hashtag1',
-              //                         style: TextStyle(
-              //                             fontSize: 12.0, color: Colors.blue),
-              //                       ),
-              //                       SizedBox(width: 5.0),
-              //                       Text(
-              //                         '#hashtag2',
-              //                         style: TextStyle(
-              //                             fontSize: 12.0, color: Colors.blue),
-              //                       ),
-              //                       SizedBox(width: 5.0),
-              //                       Text(
-              //                         '#hashtag3',
-              //                         style: TextStyle(
-              //                             fontSize: 12.0, color: Colors.blue),
-              //                       ),
-              //                     ],
-              //                   ),
-              //                 ],
-              //               ),
-              //             ),
-              //           ],
-              //         ),
-              //       ),
-              //     ),
-              // InkWell(
-              //   onTap: () {
-              //     Navigator.push(
-              //       context, // Current context
-              //       MaterialPageRoute(
-              //         builder: (context) => const BlogPage(blogNo: 2,),
-              //       ),
-              //     );
-              //   },
-              //   child: Card(
-              //     clipBehavior: Clip.antiAliasWithSaveLayer,
-              //     shape: RoundedRectangleBorder(
-              //       borderRadius: BorderRadius.circular(5.0),
-              //     ),
-              //     color: Colors.grey[100],
-              //     elevation: 2.0,
-              //     child: Column(
-              //       children: [
-              //         // Image content
-              //         Image.asset(
-              //           'assets/images/ninearch1.jpg',
-              //           fit: BoxFit.cover,
-              //           height: 300.0,
-              //           width: double.infinity,
-              //         ),
-              //         Container(
-              //           padding: const EdgeInsets.all(10.0), // Add some padding
-              //           child: const Column(
-              //             crossAxisAlignment: CrossAxisAlignment.start,
-              //             children: [
-              //               Text(
-              //                 'Bridge in the Sky - Nine Arch',
-              //                 style: TextStyle(
-              //                     fontSize: 16.0, fontWeight: FontWeight.bold),
-              //               ),
-              //               SizedBox(height: 5.0),
-              //               Text(
-              //                 '''Nestled amidst the verdant hills of Sri Lanka's central highlands lies a marvel of colonial-era engineering - the Nine Arch Bridge. Often referred to as the "Bridge in the Sky," this awe-inspiring structure gracefully arches over a deep valley, captivating travelers with its unique design and rich history.''',
-              //                 style: TextStyle(
-              //                     fontSize: 14.0, color: Colors.black54),
-              //               ),
-              //               SizedBox(height: 5.0),
-              //               Row(
-              //                 children: [
-              //                   Text(
-              //                     '#hashtag1',
-              //                     style: TextStyle(
-              //                         fontSize: 12.0, color: Colors.blue),
-              //                   ),
-              //                   SizedBox(width: 5.0),
-              //                   Text(
-              //                     '#hashtag2',
-              //                     style: TextStyle(
-              //                         fontSize: 12.0, color: Colors.blue),
-              //                   ),
-              //                   SizedBox(width: 5.0),
-              //                   Text(
-              //                     '#hashtag3',
-              //                     style: TextStyle(
-              //                         fontSize: 12.0, color: Colors.blue),
-              //                   ),
-              //                 ],
-              //               ),
-              //             ],
-              //           ),
-              //         ),
-              //       ],
-              //     ),
-              //   ),
-              // ),
-              //   ],
-              // );
             },
           ),
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
+        backgroundColor: Colors.white,
+        selectedItemColor: const Color(0xFF00B4DB),
+        unselectedItemColor: Colors.grey,
+        items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home),
             label: 'Home',
           ),
           BottomNavigationBarItem(
+            icon: Icon(Icons.add),
+            label: 'Plan Your Adventure',
+          ),
+          BottomNavigationBarItem(
             icon: Icon(Icons.explore),
             label: 'Explore',
           ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.explore),
+            label: 'New',
+          ),
         ],
         currentIndex: 0,
-        onTap: (int index) {
+        onTap: (int index) async {
           switch (index) {
-            case 0:
-              break;
             case 1:
+              bool journeyExists = await JourneyDbService()
+                  .isExistsByEmail(widget.loggedUser.email!);
+
+              if (journeyExists) {
+                _showDeleteDialog();
+              } else {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => PersonalizeRoute(loggedUser: widget.loggedUser),
+                  ),
+                );
+              }
+              break;
+
+            case 2:
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => ExplorePage()),
+                MaterialPageRoute(
+                  builder: (context) => ExplorePage(loggedUser: widget.loggedUser),
+                ),
+              );
+              break;
+
+            case 3:
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => Homne(),
+                ),
               );
               break;
           }
@@ -276,85 +183,111 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildBlogCard(Map<String, dynamic> post, BuildContext context) {
-    final String title = post['title'];
-    final String shortDescription = post['shortDescription'];
-    final String hashtag1 = post['hashtag1'];
-    final String hashtag2 = post['hashtag2'];
-    final String hashtag3 = post['hashtag3'];
-    final String photoUrl1 = post['photoUrl1'];
-    //final String photoUrl2 = post['photoUrl2'];
-    //final String photoUrl3 = post['photoUrl3'];
-   // final String photoUrl4 = post['photoUrl4'];
-    return InkWell(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => BlogPage(
-              blogId: post['id'],
-              loggedUser: widget.loggedUser,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16.0),
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => BlogPage(
+                blogId: post['id'],
+                loggedUser: widget.loggedUser,
+              ),
             ),
+          );
+        },
+        child: Card(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12.0),
           ),
-        );
-      },
-      child: Card(
-        clipBehavior: Clip.antiAliasWithSaveLayer,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(5.0),
-        ),
-        color: Colors.grey[100],
-        elevation: 2.0,
-        child: Column(
-          children: [
-            Image.asset(
-              photoUrl1,
-              fit: BoxFit.cover,
-              height: 300.0,
-              width: double.infinity,
-            ),
-            Container(
-              padding: const EdgeInsets.all(10.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+          elevation: 5,
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            children: [
+              Stack(
                 children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                        fontSize: 16.0, fontWeight: FontWeight.bold),
+                  Image.asset(
+                    post['photoUrl1'],
+                    height: 200,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
                   ),
-                  const SizedBox(height: 5.0),
-                  Text(
-                    shortDescription,
-                    style:
-                        const TextStyle(fontSize: 14.0, color: Colors.black54),
-                  ),
-                  const SizedBox(height: 5.0),
-                  Row(
-                    children: [
-                      Text(
-                        hashtag1,
-                        style:
-                            const TextStyle(fontSize: 12.0, color: Colors.blue),
+                  Positioned(
+                    bottom: 10,
+                    right: 10,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8.0, vertical: 4.0),
+                      decoration: BoxDecoration(
+                        color: Colors.black54,
+                        borderRadius: BorderRadius.circular(8.0),
                       ),
-                      const SizedBox(width: 5.0),
-                      Text(
-                        hashtag2,
-                        style:
-                            const TextStyle(fontSize: 12.0, color: Colors.blue),
+                      child: Text(
+                        post['hashtag1'],
+                        style: const TextStyle(color: Colors.white),
                       ),
-                      const SizedBox(width: 5.0),
-                      Text(
-                        hashtag3,
-                        style:
-                            const TextStyle(fontSize: 12.0, color: Colors.blue),
-                      ),
-                    ],
+                    ),
                   ),
                 ],
               ),
-            ),
-          ],
+              Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      post['title'],
+                      style: GoogleFonts.montserrat(
+                        fontSize: 18.0,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8.0),
+                    Text(
+                      post['shortDescription'],
+                      style: GoogleFonts.openSans(
+                        fontSize: 14.0,
+                        color: Colors.black54,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
+      ),
+    );
+  }
+
+  void _showDeleteDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Current Journey?'),
+        content: const Text('This action is irreversible. Proceed?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              await JourneyDbService()
+                  .deleteJourneyByEmail(widget.loggedUser.email!);
+              Navigator.of(context).pop();
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      PersonalizeRoute(loggedUser: widget.loggedUser),
+                ),
+              );
+            },
+            child: const Text('Delete'),
+          ),
+        ],
       ),
     );
   }

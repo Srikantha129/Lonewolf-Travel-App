@@ -2,7 +2,7 @@
   "project_info": {
     "project_number": "813813682916",
     "project_id": "lonewolf-67cb0",
-    "storage_bucket": "lonewolf-67cb0.appspot.com"
+    "storage_bucket": "lonewolf-67cb0.firebasestorage.app"
   },
   "client": [
     {
@@ -27,6 +27,14 @@
           "android_info": {
             "package_name": "com.lonewolf.lonewolf",
             "certificate_hash": "2822d21b09ee12ea5416443073d7af584fc03639"
+          }
+        },
+        {
+          "client_id": "813813682916-u4dbomhk090hsrg99cubssftff793aeu.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.lonewolf.lonewolf",
+            "certificate_hash": "bb34e806ceb539ecaeebcbc8979d5b52399bb94d"
           }
         },
         {

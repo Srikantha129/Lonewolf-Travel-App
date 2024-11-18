@@ -149,6 +149,5 @@ class _ProvinceDetailsPageState extends State<ProvinceDetailsPage> {
         ),
       ),
     );
-
   }
 }
