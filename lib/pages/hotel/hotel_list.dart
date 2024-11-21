@@ -135,8 +135,7 @@ class HotelList extends ConsumerWidget {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            SizedBox(
-                              width: width - (fixPadding * 6.0 + 70.0),
+                            Expanded(
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.start,
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -144,6 +143,8 @@ class HotelList extends ConsumerWidget {
                                   Text(
                                     item.name,
                                     style: blackBigTextStyle,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis, // Prevents overflow for long names
                                   ),
                                   const SizedBox(height: 5.0),
                                   Row(
@@ -166,28 +167,34 @@ class HotelList extends ConsumerWidget {
                                         size: 18.0,
                                       ),
                                       const SizedBox(width: 5.0),
-                                      //Text(item.location, style: greySmallTextStyle),
+                                      Text(
+                                        item.city ?? 'Unknown location', // Provide a fallback for null location
+                                        style: greySmallTextStyle,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis, // Prevents overflow
+                                      ),
                                     ],
                                   ),
                                 ],
                               ),
                             ),
+                            const SizedBox(width: 10.0), // Add some spacing between the two columns
                             Column(
                               mainAxisAlignment: MainAxisAlignment.start,
-                              crossAxisAlignment: CrossAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
                                 Text(
-                                  '50',
+                                  '\$${item.avDates?.isNotEmpty == true ? (double.tryParse(item.avDates!.first.values.first.toString())?.toStringAsFixed(1) ?? '51.0') : '51.0'}',
                                   style: bigPriceTextStyle,
                                 ),
                                 const SizedBox(height: 5.0),
                                 Text('per night', style: greySmallTextStyle),
-
                               ],
                             ),
                           ],
                         ),
                       ),
+
                     ],
                   ),
                 ),

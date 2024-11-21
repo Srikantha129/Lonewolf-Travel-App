@@ -31,7 +31,7 @@ class ExplorePageState extends State<ExplorePage> {
     setState(() {
       userEmail = prefs.getString('userEmail');
       // displayName = prefs.getString('userName');
-      // print('received photoUrl: $photoURL');
+       print('received userEmail: $userEmail');
     });
   }
   void _fetchProvinces() async {
@@ -46,9 +46,6 @@ class ExplorePageState extends State<ExplorePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Explore Sri Lanka'),
-      ),
       body: provinces.isEmpty
           ? const Center(child: CircularProgressIndicator())
           : ListView.separated(
@@ -58,12 +55,14 @@ class ExplorePageState extends State<ExplorePage> {
                 final province = provinces[index];
                 return InkWell(
                   onTap: () {
+                    print(province.name);
                     // Navigate to the province details page
                     Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) =>
                             ProvinceDetailsPage(province: province.name),
+
                       ),
                     );
                   },
@@ -77,7 +76,7 @@ class ExplorePageState extends State<ExplorePage> {
               separatorBuilder: (context, index) =>
                   const SizedBox(height: 10.0),
             ),
-      bottomNavigationBar: BottomNavigationBar(
+      /*bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
             icon: Icon(Icons.home),
@@ -145,7 +144,7 @@ class ExplorePageState extends State<ExplorePage> {
               break;
           }
         },
-      ),
+      ),*/
     );
   }
 }
@@ -156,11 +155,10 @@ class CityCard extends StatelessWidget {
   final String provinceDescription;
 
   const CityCard(
-      {Key? key,
+      {super.key,
       required this.cityName,
       required this.cityImage,
-      required this.provinceDescription})
-      : super(key: key);
+      required this.provinceDescription});
 
   @override
   Widget build(BuildContext context) {

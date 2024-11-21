@@ -139,9 +139,10 @@ class _HotelRoomState extends State<HotelRoom> {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    'From \$${widget.hotel.avDates?.first.values.first ?? 'N/A'}',
+                    'From \$${widget.hotel.avDates?.isNotEmpty == true ? (double.tryParse(widget.hotel.avDates!.first.values.first.toString())?.toStringAsFixed(1) ?? '70') : '70'}',
                     style: blackBigBoldTextStyle,
                   ),
+
                   Text(
                     ' / per night',
                     style: blackSmallTextStyle,

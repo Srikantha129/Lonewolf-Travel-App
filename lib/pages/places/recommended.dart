@@ -232,7 +232,7 @@ class Recommended extends ConsumerWidget {
                                     crossAxisAlignment: CrossAxisAlignment.center,
                                     children: [
                                       Text(
-                                        '\$${item.avDates?.first.values.first ?? 'N/A'}', // Access the first value in the first map (price)
+                                        '\$${item.avDates?.first.values.first ?? '70'}', // Access the first value in the first map (price)
                                         style: bigPriceTextStyle,
                                         textAlign: TextAlign.center, // Align text properly
                                         overflow: TextOverflow.ellipsis, // Prevent overflow

@@ -69,7 +69,7 @@ class PlaceState extends State<Place> {
           category(),
           // Category End
           // Top Destinations Start
-          topDestination(),
+          //topDestination(),
           // Top Destinations End
           // Recommended Start
           Recommended(),
@@ -167,7 +167,7 @@ class PlaceState extends State<Place> {
     );
   }
 
-  topDestination() {
+  /*topDestination() {
     double width = MediaQuery.of(context).size.width;
     return Column(
       mainAxisAlignment: MainAxisAlignment.start,
@@ -260,5 +260,5 @@ class PlaceState extends State<Place> {
         ),
       ],
     );
-  }
+  }*/
 }

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:lonewolf/constant/constant.dart';
 import 'package:lonewolf/pages/hotel/hotel_list.dart';
+import 'package:lonewolf/screens/explore.dart';
+
 
 
 class Explore extends StatefulWidget {
@@ -64,14 +66,14 @@ class _ExploreState extends State<Explore> {
           bottom: const TabBar(
             tabs: [
               Tab(text: 'Hotel'),
-              Tab(text: 'Experiences'),
+              Tab(text: 'Provinces'),
             ],
           ),
         ),
-        body: TabBarView(
+        body: const TabBarView(
           children: [
-            const HotelList(),
-            experience(),
+            HotelList(),
+            ExplorePage(),
           ],
         ),
       ),
