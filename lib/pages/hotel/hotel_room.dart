@@ -7,15 +7,16 @@ import 'package:lonewolf/pages/related_place/related_place.dart';
 import 'package:lonewolf/pages/review/review.dart';
 import 'package:lonewolf/widget/carousel_pro/lib/carousel_pro.dart';
 import 'package:lonewolf/widget/column_builder.dart';
+import 'package:webview_flutter/webview_flutter.dart';
+import 'package:lonewolf/models/hotels.dart';
+
 
 class HotelRoom extends StatefulWidget {
-  final String? title, imgPath, price;
-  HotelRoom(
-      {Key? key,
-      @required this.title,
-      @required this.imgPath,
-      @required this.price})
-      : super(key: key);
+  //final String? title, imgPath, price;
+  final Hotel hotel;
+  const HotelRoom(
+      {super.key,
+      required this.hotel,});
   @override
   _HotelRoomState createState() => _HotelRoomState();
 }
@@ -100,7 +101,7 @@ class _HotelRoomState extends State<HotelRoom> {
         backgroundColor: whiteColor,
         elevation: 0.0,
         titleSpacing: 0.0,
-        title: Text(widget.title!, style: appBarTextStyle),
+        title: Text(widget.hotel.name, style: appBarTextStyle),
         actions: [
           IconButton(
             icon: Icon((favorite) ? Icons.favorite : Icons.favorite_border),
@@ -109,11 +110,11 @@ class _HotelRoomState extends State<HotelRoom> {
                 favorite = !favorite;
               });
               if (favorite) {
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                   content: Text('Added to Favorite'),
                 ));
               } else {
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                   content: Text('Remove from Favorite'),
                 ));
               }
@@ -138,11 +139,11 @@ class _HotelRoomState extends State<HotelRoom> {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    'From \$${widget.price}',
+                    'From \$${widget.hotel.avDates?.first.values.first ?? 'N/A'}',
                     style: blackBigBoldTextStyle,
                   ),
                   Text(
-                    ' / night',
+                    ' / per night',
                     style: blackSmallTextStyle,
                   ),
                 ],
@@ -150,12 +151,11 @@ class _HotelRoomState extends State<HotelRoom> {
               InkWell(
                 onTap: () {
                   Navigator.push(
-                      context,
-                      PageTransition(
-                          type: PageTransitionType.rightToLeft,
-                          child: SelectHotelDate(
-                            price: widget.price!,
-                          )));
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => WebViewPage(url: widget.hotel.url),
+                    ),
+                  );
                 },
                 child: Container(
                   padding: EdgeInsets.only(
@@ -180,7 +180,7 @@ class _HotelRoomState extends State<HotelRoom> {
       body: ListView(
         children: [
           Hero(
-            tag: widget.title!,
+            tag: widget.hotel.name,
             child: slider(),
           ),
 
@@ -232,11 +232,7 @@ class _HotelRoomState extends State<HotelRoom> {
       height: height / 2.3,
       width: width,
       child: Carousel(
-        images: [
-          ExactAssetImage(widget.imgPath!),
-          ExactAssetImage(widget.imgPath!),
-          ExactAssetImage(widget.imgPath!),
-        ],
+        images: (widget.hotel.photoUrls?.take(4).map((url) => AssetImage(url)).toList()) ?? [],
         dotSize: 6.0,
         dotSpacing: 18.0,
         dotColor: primaryColor,
@@ -252,6 +248,7 @@ class _HotelRoomState extends State<HotelRoom> {
     );
   }
 
+
   titleRating() {
     return Container(
       padding: EdgeInsets.all(fixPadding * 2.0),
@@ -260,7 +257,7 @@ class _HotelRoomState extends State<HotelRoom> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            widget.title!,
+            widget.hotel.name,
             style: blackHeadingTextStyle,
           ),
           heightSpace,
@@ -269,19 +266,19 @@ class _HotelRoomState extends State<HotelRoom> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Icon(Icons.star, color: Colors.lime[600], size: 18.0),
-              SizedBox(width: 5.0),
+              const SizedBox(width: 5.0),
               Text(
                 '5.0',
                 style: blackSmallTextStyle,
               ),
-              SizedBox(width: 3.0),
+              const SizedBox(width: 3.0),
               Text(
                 '(12)',
                 style: greySmallTextStyle,
               ),
               widthSpace,
               Text(
-                'Budapest, Hungary',
+                '${widget.hotel.city}, ${widget.hotel.country}',
                 style: primaryColorSmallTextStyle,
               ),
             ],
@@ -384,7 +381,7 @@ class _HotelRoomState extends State<HotelRoom> {
           ),
           heightSpace,
           Text(
-            'A former colonial residence, Paradise Road Tintagel Colombo features boutique-style suites with free Wi-Fi and flat-screen TVs with cable channels. It offers massages by appointment, a pool, steam room and fitness room',
+            widget.hotel.hotelDescription,
             style: greySmallTextStyle,
             textAlign: TextAlign.justify,
           ),
@@ -512,14 +509,14 @@ class _HotelRoomState extends State<HotelRoom> {
                 markers: markers!,
                 onMapCreated: (GoogleMapController controller) {
                   Marker m = Marker(
-                      markerId: MarkerId('1'),
-                      position: LatLng(47.4517861, 18.973275));
+                      markerId: const MarkerId('1'),
+                      position: LatLng(widget.hotel.latitude, widget.hotel.longitude));
                   setState(() {
                     markers!.add(m);
                   });
                 },
                 initialCameraPosition: CameraPosition(
-                    target: LatLng(47.4517861, 18.973275), zoom: 8),
+                    target: LatLng(widget.hotel.latitude, widget.hotel.longitude), zoom: 8),
               ),
             ),
           ),
@@ -587,7 +584,7 @@ class _HotelRoomState extends State<HotelRoom> {
                         ),
                       ),
                       widthSpace,
-                      Container(
+                      SizedBox(
                         width: width - (fixPadding * 8.0 + 10.0 + 70.0),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.start,
@@ -597,12 +594,12 @@ class _HotelRoomState extends State<HotelRoom> {
                               '${item['name']}',
                               style: blackSmallBoldTextStyle,
                             ),
-                            SizedBox(height: 5.0),
+                            const SizedBox(height: 5.0),
                             Text(
                               '${item['time']}',
                               style: greySmallTextStyle,
                             ),
-                            SizedBox(height: 5.0),
+                            const SizedBox(height: 5.0),
                             ratingBar(item['rating']),
                           ],
                         ),
@@ -627,7 +624,7 @@ class _HotelRoomState extends State<HotelRoom> {
               Navigator.push(
                   context,
                   PageTransition(
-                      duration: Duration(milliseconds: 600),
+                      duration: const Duration(milliseconds: 600),
                       type: PageTransitionType.rightToLeftWithFade,
                       child: Review(
                         reviewList: ratingList,
@@ -705,3 +702,25 @@ class _HotelRoomState extends State<HotelRoom> {
     );
   }
 }
+
+class WebViewPage extends StatelessWidget {
+  final String url;
+
+  const WebViewPage({super.key, required this.url});
+
+  @override
+  Widget build(BuildContext context) {
+    print('Loading URL in WebViewPage: $url');
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Booking Page'),
+      ),
+      body: WebViewWidget(controller: WebViewController()
+        ..setJavaScriptMode(JavaScriptMode.unrestricted)
+        ..loadRequest(Uri.parse(url))),
+    //..loadRequest(Uri.parse('https://www.google.com'))),
+
+    );
+  }
+}
+

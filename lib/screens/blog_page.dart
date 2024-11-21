@@ -2,14 +2,15 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import '../models/LoneWolfUser.dart';
 
 class BlogPage extends StatefulWidget {
   final String blogId;
-  final User loggedUser;
-  const BlogPage({required this.blogId, required this.loggedUser, super.key});
+  // final User loggedUser;
+  const BlogPage({required this.blogId, /*required this.loggedUser,*/ super.key});
 
   @override
   State<BlogPage> createState() => _BlogPageState();
@@ -24,31 +25,59 @@ class _BlogPageState extends State<BlogPage> {
   double _averageRating = 0.0;
   double _userRating = 0.0;
   final List<int> _ratingsDistribution = List.filled(5, 0);
-
+  String? userEmail;
+  String? userId;
+  String? photoURL;
   @override
   void initState() {
     super.initState();
-    _fetchUser(widget.loggedUser.email!);
-    _fetchAverageRating();
+    _initialize();
+  }
+
+  Future<void> _initialize() async {
+    // Wait for login status to be checked
+    await _checkLoginStatus();
+
+    if (userEmail != null) {
+      // Fetch user data and rating only if userEmail is available
+      await _fetchUser(userEmail!);
+      await _fetchAverageRating();
+    } else {
+      print('User email is null. Cannot fetch user or ratings.');
+    }
+  }
+
+  Future<void> _checkLoginStatus() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      userEmail = prefs.getString('userEmail');
+      userId = prefs.getString('userId');
+      photoURL = prefs.getString('photoURL');
+      // print('received photoUrl: $photoURL');
+    });
   }
 
   Future<void> _fetchAverageRating() async {
-    final ratingsSnapshot = await _firestore
-        .collection('post')
-        .doc(widget.blogId)
-        .collection('ratings')
-        .get();
+    try {
+      final ratingsSnapshot = await _firestore
+          .collection('post')
+          .doc(widget.blogId)
+          .collection('ratings')
+          .get();
 
-    if (ratingsSnapshot.docs.isNotEmpty) {
-      final ratings = ratingsSnapshot.docs.map((doc) => doc['rating'] as double).toList();
-      setState(() {
-        _averageRating = ratings.reduce((a, b) => a + b) / ratings.length;
-        _ratingsDistribution.fillRange(0, 5, 0); // Reset distribution
+      if (ratingsSnapshot.docs.isNotEmpty) {
+        final ratings = ratingsSnapshot.docs.map((doc) => doc['rating'] as double).toList();
+        setState(() {
+          _averageRating = ratings.reduce((a, b) => a + b) / ratings.length;
+          _ratingsDistribution.fillRange(0, 5, 0); // Reset distribution
 
-        for (var rating in ratings) {
-          _ratingsDistribution[5 - rating.toInt()] += 1;
-        }
-      });
+          for (var rating in ratings) {
+            _ratingsDistribution[5 - rating.toInt()] += 1;
+          }
+        });
+      }
+    } catch (e) {
+      print('Error fetching average rating: $e');
     }
   }
 
@@ -58,10 +87,11 @@ class _BlogPageState extends State<BlogPage> {
           .collection('post')
           .doc(widget.blogId)
           .collection('ratings')
-          .doc(widget.loggedUser.uid)
-          .set({'userId': widget.loggedUser.uid, 'rating': rating});
+          .doc(userId)
+          .set({'userId': userId, 'rating': rating});
 
-      _fetchAverageRating();
+      // Recalculate average rating after submitting
+      await _fetchAverageRating();
     } catch (e) {
       print('Error submitting rating: $e');
     }
@@ -88,7 +118,7 @@ class _BlogPageState extends State<BlogPage> {
             .collection('post')
             .doc(widget.blogId)
             .collection('ratings')
-            .doc(widget.loggedUser.uid)
+            .doc(userId)
             .get();
 
         if (ratingSnapshot.exists) {
@@ -106,15 +136,20 @@ class _BlogPageState extends State<BlogPage> {
 
   Future<void> _addComment(String commentText) async {
     if (commentText.isEmpty) return;
-    await _firestore.collection('post').doc(widget.blogId).collection('comments').add({
-      'userId': widget.loggedUser.uid,
-      'userEmail': widget.loggedUser.email,
-      'userImage': widget.loggedUser.photoURL,
-      'comment': commentText,
-      'timestamp': FieldValue.serverTimestamp(),
-    });
-    _commentController.clear();
+    try {
+      await _firestore.collection('post').doc(widget.blogId).collection('comments').add({
+        'userId': userId,
+        'userEmail': userEmail,
+        'userImage': photoURL,
+        'comment': commentText,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+      _commentController.clear();
+    } catch (e) {
+      print('Error adding comment: $e');
+    }
   }
+
 
   @override
   Widget build(BuildContext context) {

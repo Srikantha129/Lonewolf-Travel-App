@@ -44,9 +44,10 @@ class Recommended extends ConsumerWidget {
                           duration: const Duration(milliseconds: 700),
                           type: PageTransitionType.fade,
                           child: HotelRoom(
-                            title: item.name,
-                            imgPath: item.photoUrls?.first, // Placeholder for image URL
-                              price: '\$${item.avDates?.first.values.first ?? 'N/A'}' // Access the price from the first map in avDates
+                            // title: item.name,
+                            // imgPath: item.photoUrls?.first, // Placeholder for image URL
+                            //   price: '\$${item.avDates?.first.values.first ?? 'N/A'}',// Access the price from the first map in avDates
+                             hotel: item,
                           ),
                         ),
                       );
@@ -166,9 +167,7 @@ class Recommended extends ConsumerWidget {
                               decoration: BoxDecoration(
                                 borderRadius: const BorderRadius.vertical(top: Radius.circular(10.0)),
                                 image: DecorationImage(
-                                  image: NetworkImage(
-                                    item.photoUrls!.first, // Placeholder for image URL
-                                  ),
+                                  image: _getImageProvider(item.photoUrls!.first),
                                   fit: BoxFit.cover,
                                 ),
                               ),
@@ -259,7 +258,7 @@ class Recommended extends ConsumerWidget {
                 },
               );
             },
-            loading: () => Center(child: CircularProgressIndicator()),
+            loading: () => const Center(child: CircularProgressIndicator()),
             error: (err, stack) => Center(child: Text('Error: $err')),
           ),
         ],
@@ -284,5 +283,14 @@ class Recommended extends ConsumerWidget {
             color: Colors.lime[600]),
       ],
     );
+  }
+}
+ImageProvider _getImageProvider(String imageUrl) {
+  try {
+    // Attempt to load asset image first
+    return AssetImage(imageUrl);
+  } catch (_) {
+    // Fallback to network image
+    return NetworkImage(imageUrl);
   }
 }

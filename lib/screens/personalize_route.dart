@@ -8,14 +8,15 @@ import 'package:lonewolf/services/journey_db_service.dart';
 import 'package:lonewolf/screens/explore.dart';
 import 'package:http/http.dart' as http;
 import 'package:lonewolf/models/constants.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/Preferences.dart';
 
 class PersonalizeRoute extends StatefulWidget {
-  final User loggedUser;
+  //final User loggedUser;
 
   const PersonalizeRoute({
     super.key,
-    required this.loggedUser,
+    //required this.loggedUser,
   });
 
   @override
@@ -30,17 +31,31 @@ class _PersonalizeRouteState extends State<PersonalizeRoute> {
   List<PlacePhotos> placePhotosList = [];
   List<PlacePhotos> placePhotoUrls = [];
   bool _isDisposed = false;
+  String? userEmail;
 
   final TextEditingController _startDateController = TextEditingController();
   final TextEditingController _endDateController = TextEditingController();
 
-
+  @override
+  void initState() {
+    super.initState();
+    _checkLoginStatus();
+  }
   @override
   void dispose() {
     _isDisposed = true;
     _startDateController.dispose();
     _endDateController.dispose();
     super.dispose();
+  }
+
+  Future<void> _checkLoginStatus() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      userEmail = prefs.getString('userEmail');
+      // displayName = prefs.getString('userName');
+      // print('received photoUrl: $photoURL');
+    });
   }
 
   List<String> mapInterestsToPlaceTypes(List<String> userInterests) {
@@ -282,7 +297,7 @@ class _PersonalizeRouteState extends State<PersonalizeRoute> {
                           startDate: _startDate!,
                           endDate: _endDate!,
                           selectedInterests: selectedInterests,
-                          email: widget.loggedUser.email.toString(),
+                          email: userEmail!,
                         );
                         JourneyDbService().addJourneyIfNotExist(journey);
 
@@ -291,7 +306,7 @@ class _PersonalizeRouteState extends State<PersonalizeRoute> {
                             context,
                             MaterialPageRoute(
                               builder: (context) => SelectPersonalizeRoute(
-                                loggedUser: widget.loggedUser,
+
                                 place: places!,
                               ),
                             ),

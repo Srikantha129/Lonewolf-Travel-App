@@ -3,13 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:lonewolf/models/Location.dart';
 import 'package:lonewolf/services/journey_db_service.dart';
 import 'package:lonewolf/services/location_db_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ViewPersonalizeRoute extends StatefulWidget {
-  final User loggedUser;
+  //final User loggedUser;
 
   const ViewPersonalizeRoute({
     super.key,
-    required this.loggedUser,
+    //required this.loggedUser,
   });
 
   @override
@@ -21,16 +22,29 @@ class _ViewPersonalizeRouteState extends State<ViewPersonalizeRoute> {
   final LocationDbService _locationDbService = LocationDbService();
   List<Location> locations = [];
   Stream? _userJourney;
+  String? userEmail;
 
   @override
   void initState() {
     super.initState();
+    _checkLoginStatus();
     _fetchData();
   }
 
+  Future<void> _checkLoginStatus() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      userEmail = prefs.getString('userEmail');
+      // displayName = prefs.getString('userName');
+      // print('received photoUrl: $photoURL');
+    });
+  }
+
+
+
   Future<void> _fetchData() async {
     _userJourney = JourneyDbService()
-        .getJourneysByEmail(widget.loggedUser.email.toString());
+        .getJourneysByEmail(userEmail!);
     _userJourney!.listen((snapshot) {
       if (snapshot.docs.isNotEmpty) {
         final journey = snapshot.docs.first.data();
@@ -65,7 +79,7 @@ class _ViewPersonalizeRouteState extends State<ViewPersonalizeRoute> {
               context,
               MaterialPageRoute(
                 builder: (context) =>
-                    ViewPersonalizeRoute(loggedUser: widget.loggedUser),
+                    const ViewPersonalizeRoute(),
               ),
             ),
           ),

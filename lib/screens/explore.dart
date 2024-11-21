@@ -3,12 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:lonewolf/screens/personalize_route.dart';
 import 'package:lonewolf/screens/province_details_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/Province.dart';
 import '../services/journey_db_service.dart';
 
 class ExplorePage extends StatefulWidget {
-  final User loggedUser;
-  const ExplorePage({super.key, required this.loggedUser});
+  // final User loggedUser;
+  const ExplorePage({super.key, /*required this.loggedUser*/});
 
   @override
   ExplorePageState createState() => ExplorePageState();
@@ -16,13 +17,23 @@ class ExplorePage extends StatefulWidget {
 
 class ExplorePageState extends State<ExplorePage> {
   List<Province> provinces = [];
+  String? userEmail;
 
   @override
   void initState() {
     super.initState();
+    _checkLoginStatus();
     _fetchProvinces();
   }
 
+  Future<void> _checkLoginStatus() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      userEmail = prefs.getString('userEmail');
+      // displayName = prefs.getString('userName');
+      // print('received photoUrl: $photoURL');
+    });
+  }
   void _fetchProvinces() async {
     QuerySnapshot snapshot =
         await FirebaseFirestore.instance.collection('provinze').get();
@@ -88,7 +99,7 @@ class ExplorePageState extends State<ExplorePage> {
               break;
             case 1:
               if (await JourneyDbService()
-                  .isExistsByEmail(widget.loggedUser.email.toString())) {
+                  .isExistsByEmail(userEmail!)) {
                 showDialog(
                   context: context,
                   builder: (BuildContext context) {
@@ -106,13 +117,13 @@ class ExplorePageState extends State<ExplorePage> {
                         TextButton(
                           onPressed: () async {
                             await JourneyDbService().deleteJourneyByEmail(
-                                widget.loggedUser.email.toString());
+                              userEmail!);
                             Navigator.of(context).pop();
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                  builder: (context) => PersonalizeRoute(
-                                      loggedUser: widget.loggedUser)),
+                                  builder: (context) => const PersonalizeRoute(
+                                      /*loggedUser: widget.loggedUser*/)),
                             );
                           },
                           child: const Text('Proceed'),
@@ -126,7 +137,7 @@ class ExplorePageState extends State<ExplorePage> {
                   context,
                   MaterialPageRoute(
                       builder: (context) =>
-                          PersonalizeRoute(loggedUser: widget.loggedUser)),
+                          const PersonalizeRoute(/*loggedUser: widget.loggedUser*/)),
                 );
               }
               break;

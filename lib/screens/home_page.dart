@@ -5,14 +5,16 @@ import 'package:google_fonts/google_fonts.dart'; // Add this for better typograp
 import 'package:lonewolf/screens/personalize_route.dart';
 import 'package:lonewolf/screens/view_personalize_route.dart';
 import 'package:lonewolf/services/journey_db_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../constant/constant.dart';
 import '../models/LoneWolfUser.dart';
 import 'blog_page.dart';
 import 'explore.dart';
 import 'package:lonewolf/pages/home/home.dart';
 
 class HomePage extends StatefulWidget {
-  final User loggedUser;
-  const HomePage({required this.loggedUser, super.key});
+  //final User loggedUser;
+  const HomePage({/*required this.loggedUser,*/ super.key});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -22,6 +24,7 @@ class _HomePageState extends State<HomePage> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   LoneWolfUser? user;
+  String? userEmail;
 
   Future<List<Map<String, dynamic>>> _fetchPosts() async {
     final querySnapshot = await _firestore.collection('post').get();
@@ -36,7 +39,23 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    _fetchUser(widget.loggedUser.email!.toString());
+    _initialize();
+  }
+
+  Future<void> _initialize() async {
+    await _checkLoginStatus();
+    if (userEmail != null) {
+      await _fetchUser(userEmail!);
+    } else {
+      print('User email is null. Cannot fetch user.');
+    }
+  }
+
+  Future<void> _checkLoginStatus() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      userEmail = prefs.getString('userEmail');
+    });
   }
 
   Future<void> _fetchUser(String email) async {
@@ -50,11 +69,14 @@ class _HomePageState extends State<HomePage> {
         setState(() {
           user = LoneWolfUser.fromJson(docSnapshot.docs.first.data());
         });
+      } else {
+        print('No user found with email: $email');
       }
     } catch (e) {
       print('Error fetching user: $e');
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -62,8 +84,8 @@ class _HomePageState extends State<HomePage> {
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Colors.transparent,
-        flexibleSpace: Container(
+        backgroundColor: whiteColor,
+        /*flexibleSpace: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
               colors: [Color(0xFF00B4DB), Color(0xFF0083B0)],
@@ -71,7 +93,7 @@ class _HomePageState extends State<HomePage> {
               end: Alignment.bottomRight,
             ),
           ),
-        ),
+        ),*/
         centerTitle: true,
         title: Image.asset(
           'assets/images/Logo1.png',
@@ -84,7 +106,7 @@ class _HomePageState extends State<HomePage> {
               context,
               MaterialPageRoute(
                 builder: (context) =>
-                    ViewPersonalizeRoute(loggedUser: widget.loggedUser),
+                    ViewPersonalizeRoute(/*loggedUser: widget.loggedUser*/),
               ),
             ),
           ),
@@ -118,7 +140,7 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
+      /*bottomNavigationBar: BottomNavigationBar(
         backgroundColor: Colors.white,
         selectedItemColor: const Color(0xFF00B4DB),
         unselectedItemColor: Colors.grey,
@@ -145,7 +167,7 @@ class _HomePageState extends State<HomePage> {
           switch (index) {
             case 1:
               bool journeyExists = await JourneyDbService()
-                  .isExistsByEmail(widget.loggedUser.email!);
+                  .isExistsByEmail(userEmail!);
 
               if (journeyExists) {
                 _showDeleteDialog();
@@ -153,7 +175,7 @@ class _HomePageState extends State<HomePage> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => PersonalizeRoute(loggedUser: widget.loggedUser),
+                    builder: (context) => PersonalizeRoute(*//*loggedUser: widget.loggedUser*//*),
                   ),
                 );
               }
@@ -163,7 +185,7 @@ class _HomePageState extends State<HomePage> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => ExplorePage(loggedUser: widget.loggedUser),
+                  builder: (context) => ExplorePage(),
                 ),
               );
               break;
@@ -178,7 +200,7 @@ class _HomePageState extends State<HomePage> {
               break;
           }
         },
-      ),
+      ),*/
     );
   }
 
@@ -192,7 +214,7 @@ class _HomePageState extends State<HomePage> {
             MaterialPageRoute(
               builder: (context) => BlogPage(
                 blogId: post['id'],
-                loggedUser: widget.loggedUser,
+                /*loggedUser: widget.loggedUser,*/
               ),
             ),
           );
@@ -261,7 +283,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  void _showDeleteDialog() {
+  /*void _showDeleteDialog() {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -275,13 +297,13 @@ class _HomePageState extends State<HomePage> {
           TextButton(
             onPressed: () async {
               await JourneyDbService()
-                  .deleteJourneyByEmail(widget.loggedUser.email!);
+                  .deleteJourneyByEmail(userEmail!);
               Navigator.of(context).pop();
               Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (context) =>
-                      PersonalizeRoute(loggedUser: widget.loggedUser),
+                      PersonalizeRoute(/*loggedUser: widget.loggedUser*/),
                 ),
               );
             },
@@ -290,5 +312,5 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
     );
-  }
+  }*/
 }

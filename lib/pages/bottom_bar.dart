@@ -3,11 +3,13 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:lonewolf/constant/constant.dart';
-import 'package:lonewolf/pages/favorite/favorite.dart';
+import 'package:lonewolf/pages/explore/explore.dart';
 import 'package:lonewolf/pages/home/home.dart';
-import 'package:lonewolf/pages/hotel/hotel_list.dart';
+//import 'package:lonewolf/pages/hotel/hotel_list.dart';
 import 'package:lonewolf/pages/profile/profile.dart';
 import 'package:lonewolf/pages/trip/trip_home.dart';
+import 'package:lonewolf/screens/home_page.dart';
+
 
 class BottomBar extends StatefulWidget {
   const BottomBar({super.key});
@@ -29,7 +31,7 @@ class BottomBarState extends State<BottomBar> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      bottomNavigationBar: Container(
+      bottomNavigationBar: SizedBox(
         height: 80.0,
         child: BottomAppBar(
           child: Row(
@@ -38,9 +40,9 @@ class BottomBarState extends State<BottomBar> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               getBottomBarItemTile(0, Icons.home),
-              getBottomBarItemTile(1, Icons.hotel),
-              getBottomBarItemTile(2, Icons.flight_takeoff),
-              getBottomBarItemTile(3, Icons.favorite),
+              getBottomBarItemTile(1, Icons.article),
+              getBottomBarItemTile(2, Icons.add_location_sharp),
+              getBottomBarItemTile(3, Icons.explore),
               getBottomBarItemTile(4, Icons.person),
             ],
           ),
@@ -54,13 +56,13 @@ class BottomBarState extends State<BottomBar> {
           }
         },
         child: (currentIndex == 0)
-            ? Homne()
+            ? const Homne()
             : (currentIndex == 1)
-            ? HotelList()
+            ? const HomePage()
             : (currentIndex == 2)
             ? TripHome()
             : (currentIndex == 3)
-            ? Favorite()
+            ? const Explore()
             : Profile(),
       ),
     );
@@ -92,7 +94,7 @@ class BottomBarState extends State<BottomBar> {
   bool onWillPop() {
     DateTime now = DateTime.now();
     if (currentBackPressTime == null ||
-        now.difference(currentBackPressTime!) > Duration(seconds: 2)) {
+        now.difference(currentBackPressTime!) > const Duration(seconds: 2)) {
       currentBackPressTime = now;
       Fluttertoast.showToast(
         msg: 'Press Back Once Again to Exit.',

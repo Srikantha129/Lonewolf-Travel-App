@@ -9,6 +9,7 @@ import 'package:lonewolf/services/journey_db_service.dart';
 import 'package:lonewolf/services/location_db_service.dart';
 import 'package:lonewolf/screens/personalize_route.dart';
 import 'package:lonewolf/models/constants.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/Preferences.dart';
 import 'package:lonewolf/models/JourneyEntry .dart';
@@ -45,15 +46,16 @@ class LoadingScreen extends StatelessWidget {
 
 
 class SelectPersonalizeRoute extends StatefulWidget {
-  final User loggedUser;
+  //final User loggedUser;
   final List<Place> place;
+
   //final List<PlacePhotos> placePhotoUrls ;
 
 
 
   const SelectPersonalizeRoute({
     super.key,
-    required this.loggedUser,
+   // required this.loggedUser,
     required this.place,
     //required this.placePhotoUrls,
 
@@ -76,16 +78,25 @@ class _SelectPersonalizeRouteState extends State<SelectPersonalizeRoute> {
   String? _selectedDay = '01';
   Stream? _userJourney;
   List<DropdownMenuItem<String>> _dayItems = [];
+  String? userEmail;
 
   @override
   void initState() {
     super.initState();
+    _checkLoginStatus();
     _fetchData();
     getimage();
     print('Places length: ${widget.place.length}'); // Debug log
   }
 
-
+  Future<void> _checkLoginStatus() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      userEmail = prefs.getString('userEmail');
+      // displayName = prefs.getString('userName');
+      // print('received photoUrl: $photoURL');
+    });
+  }
 
   Future<List<PlacePhotos>> getPhotoUrls(List<Place> places) async {
 
@@ -156,7 +167,7 @@ class _SelectPersonalizeRouteState extends State<SelectPersonalizeRoute> {
   Future<void> _fetchData() async {
     locations = await _locationDbService.getLocations();
     _userJourney = JourneyDbService()
-        .getJourneysByEmail(widget.loggedUser.email.toString());
+        .getJourneysByEmail(userEmail!);
     _userJourney!.listen((snapshot) {
       if (snapshot.docs.isNotEmpty) {
         final journey = snapshot.docs.first.data();
@@ -205,7 +216,7 @@ class _SelectPersonalizeRouteState extends State<SelectPersonalizeRoute> {
               context,
               MaterialPageRoute(
                 builder: (context) =>
-                    ViewPersonalizeRoute(loggedUser: widget.loggedUser),
+                    ViewPersonalizeRoute(/*loggedUser: widget.loggedUser*/),
               ),
             ),
           ),
@@ -230,15 +241,14 @@ class _SelectPersonalizeRouteState extends State<SelectPersonalizeRoute> {
         itemCount: widget.place.length,
         itemBuilder: (context, index) {
           final place = widget.place[index];
-          final photourl = placePhotoUrls[index];
+          final photoUrl = placePhotoUrls[index];
           //print("placeindex $placePhotoUrls[index]");
 
-          const defaultimage = 'https://www.drlinkcheck.com/blog/40-most-beautiful-404-pages-on-the-web';
           // Check if the IDs match and determine the image source
-          final imageSource = (photourl != null &&
-              photourl.photoUrls.isNotEmpty &&
-              place.id == photourl.placeId)
-              ? photourl.photoUrls.first
+          final imageSource = (photoUrl != null &&
+              photoUrl.photoUrls.isNotEmpty &&
+              place.id == photoUrl.placeId)
+              ? photoUrl.photoUrls.first
               : 'https://i.postimg.cc/hPZQ23q6/DALL-E-2024-10-24-21-56-40-A-friendly-illustration-showing-a-cute-cartoon-character-holding-a-wren.jpg';
 
           return Card(
@@ -311,7 +321,7 @@ class _SelectPersonalizeRouteState extends State<SelectPersonalizeRoute> {
 
                             JourneyEntry journeyEntry = JourneyEntry(
                               day: _selectedDay!,
-                              email: widget.loggedUser.email!,
+                              email: userEmail!,
                               locationName: selectedPlace.displayNameText,
                               placeId: selectedPlace.id,
                               address: selectedPlace.formattedAddress,
@@ -323,7 +333,7 @@ class _SelectPersonalizeRouteState extends State<SelectPersonalizeRoute> {
                             );
 
                             PersonalJourneyService().addJourney(
-                                widget.loggedUser.email!, journeyEntry.toJson());
+                                userEmail!, journeyEntry.toJson());
 
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
