@@ -43,7 +43,7 @@
 class JourneyEntry {
   final String? day;            // Represents the day of the journey (optional)
   final String email;           // Email address associated with the entry
-  final String locationName;    // Name of the location
+  final String displayName;    // Name of the location
   final String description;     // Description of the location or activity
   final String city;            // City where the location is situated
   final String openHours;       // Operating hours for the location
@@ -57,7 +57,7 @@ class JourneyEntry {
   JourneyEntry({
     this.day, // Made `day` optional
     required this.email,
-    required this.locationName,
+    required this.displayName,
     required this.description,
     required this.city,
     required this.openHours,
@@ -74,7 +74,7 @@ class JourneyEntry {
     return JourneyEntry(
       day: data['day'] as String?, // Handle `day` as nullable
       email: data['email'] as String,
-      locationName: data['locationName'] as String,
+      displayName: data['displayName'] as String,
       description: data['description'] as String,
       city: data['city'] as String,
       openHours: data['openHours'] as String,
@@ -92,7 +92,7 @@ class JourneyEntry {
     return {
       'day': day, // Handle optional `day` field
       'email': email,
-      'locationName': locationName,
+      'displayName' : displayName,
       'description': description,
       'city': city,
       'openHours': openHours,

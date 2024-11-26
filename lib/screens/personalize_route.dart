@@ -474,6 +474,15 @@ class _PersonalizeRouteState extends State<PersonalizeRoute> {
     }
   }
 
+  String generateRandomString(int length) {
+    const String chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    Random random = Random();
+    return String.fromCharCodes(Iterable.generate(
+      length,
+          (_) => chars.codeUnitAt(random.nextInt(chars.length)),
+    ));
+  }
+
 /*
   Future<void> getimage() async {
     try {
@@ -607,6 +616,9 @@ class _PersonalizeRouteState extends State<PersonalizeRoute> {
                 child: ElevatedButton(
                   onPressed: () async {
                     if (_validateDates() && selectedInterests.isNotEmpty) {
+                      // Generate a random string
+                      String randomString = generateRandomString(10);
+
                       await getRecommendedLocations();
 
                       if (places != null && places!.isNotEmpty) {
@@ -623,8 +635,8 @@ class _PersonalizeRouteState extends State<PersonalizeRoute> {
                             context,
                             MaterialPageRoute(
                               builder: (context) => SelectPersonalizeRoute(
-
                                 place: places,
+                                randomString: randomString, // Pass the random string here
                               ),
                             ),
                           );

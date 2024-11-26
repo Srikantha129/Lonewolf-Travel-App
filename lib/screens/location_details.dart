@@ -4,15 +4,11 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:lonewolf/models/travel_locations.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:lonewolf/constant/constant.dart';
-import 'package:lonewolf/pages/hotel/selectHotelDate.dart';
 import 'package:lonewolf/pages/related_place/related_place.dart';
 import 'package:lonewolf/pages/review/review.dart';
 import 'package:lonewolf/widget/carousel_pro/lib/carousel_pro.dart';
 import 'package:lonewolf/widget/column_builder.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:webview_flutter/webview_flutter.dart';
-import 'package:lonewolf/models/hotels.dart';
-
 import 'package:lonewolf/models/JourneyEntry.dart';
 import 'package:lonewolf/models/Location.dart';
 import 'package:lonewolf/services/journey_db_service.dart';
@@ -23,9 +19,10 @@ import 'package:lonewolf/services/personal_journey_db_service.dart';
 class LocationDetails extends StatefulWidget {
   //final String? title, imgPath, price;
   final TravelLocation place;
+  final String randomString;
   const LocationDetails(
       {super.key,
-        required this.place,});
+        required this.place,required this.randomString,});
   @override
   _LocationDetailsState createState() => _LocationDetailsState();
 }
@@ -108,6 +105,7 @@ class _LocationDetailsState extends State<LocationDetails> {
   void initState() {
     super.initState();
     _checkLoginStatus();
+    _fetchData();
     markers = Set.from([]);
   }
 
@@ -214,6 +212,8 @@ class _LocationDetailsState extends State<LocationDetails> {
                 onTap: () {
                   final journeyEntry = JourneyEntry(
                     //day: _selectedDay ?? '01',
+                    //locationName: widget.place.displayName,
+                    displayName: widget.place.displayName,
                     email: userEmail ?? 'default@example.com',
                     description: widget.place.description,
                     city: widget.place.city,
@@ -223,12 +223,12 @@ class _LocationDetailsState extends State<LocationDetails> {
                     latitude: widget.place.latitude,
                     longitude: widget.place.longitude,
                     photoUrls: widget.place.photoUrls,
-                    dayCount: dayCount,
-                    locationName: widget.place.displayName,
+                    dayCount: dayCount
+
                   );
 
                   PersonalJourneyService().addJourney(
-                      userEmail!,
+                      widget.randomString,
                       journeyEntry.toFirestore());
 
                   ScaffoldMessenger.of(context)
@@ -784,27 +784,6 @@ class _LocationDetailsState extends State<LocationDetails> {
           size: 18.0,
         ),
       ],
-    );
-  }
-}
-
-class WebViewPage extends StatelessWidget {
-  final String url;
-
-  const WebViewPage({super.key, required this.url});
-
-  @override
-  Widget build(BuildContext context) {
-    print('Loading URL in WebViewPage: $url');
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Booking Page'),
-      ),
-      body: WebViewWidget(controller: WebViewController()
-        ..setJavaScriptMode(JavaScriptMode.unrestricted)
-        ..loadRequest(Uri.parse(url))),
-      //..loadRequest(Uri.parse('https://www.google.com'))),
-
     );
   }
 }

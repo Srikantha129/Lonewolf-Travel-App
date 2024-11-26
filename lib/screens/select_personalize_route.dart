@@ -321,8 +321,9 @@ import 'location_details.dart';
 
 class SelectPersonalizeRoute extends StatelessWidget {
   final List<TravelLocation> place;
+  final String randomString;
 
-  const SelectPersonalizeRoute({super.key, required this.place});
+  const SelectPersonalizeRoute({super.key, required this.place,required this.randomString,});
 
   @override
   Widget build(BuildContext context) {
@@ -330,7 +331,29 @@ class SelectPersonalizeRoute extends StatelessWidget {
 
     final recommendedList = place.toList(); // Use the entire list
 
-    return Scaffold(
+    return WillPopScope(
+        onWillPop: () async {
+      // Show confirmation dialog
+      bool? confirmExit = await showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text("Confirmation"),
+          content: const Text("Are you sure you want to leave this page?"),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false), // Dismiss and return false
+              child: const Text("Cancel"),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true), // Dismiss and return true
+              child: const Text("Yes"),
+            ),
+          ],
+        ),
+      );
+      return confirmExit ?? false; // If null (dialog dismissed), prevent exit
+    },
+    child: Scaffold(
       appBar: AppBar(
         title: const Text("Personalized Route"),
       ),
@@ -363,7 +386,7 @@ class SelectPersonalizeRoute extends StatelessWidget {
                               // title: item.name,
                               // imgPath: item.photoUrls?.first, // Placeholder for image URL
                               //   price: '\$${item.avDates?.first.values.first ?? 'N/A'}',// Access the price from the first map in avDates
-                              place: item,
+                              place: item, randomString:randomString
                             ),
                           ),
                         );
@@ -494,7 +517,7 @@ class SelectPersonalizeRoute extends StatelessWidget {
           ],
         ),
       ),
-    );
+    ));
   }
 
   // Star rating widget
