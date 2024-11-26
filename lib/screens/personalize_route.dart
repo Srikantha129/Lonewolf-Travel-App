@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'dart:math';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -9,7 +11,11 @@ import 'package:lonewolf/screens/explore.dart';
 import 'package:http/http.dart' as http;
 import 'package:lonewolf/models/constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../models/Preferences.dart';
+//import '../models/Preferences.dart';
+import 'package:lonewolf/models/new_places.dart';
+
+import '../models/travel_locations.dart';
+import '../services/newplaces_db_service.dart';
 
 class PersonalizeRoute extends StatefulWidget {
   //final User loggedUser;
@@ -27,9 +33,9 @@ class _PersonalizeRouteState extends State<PersonalizeRoute> {
   DateTime? _startDate;
   DateTime? _endDate;
   List<String> selectedInterests = [];
-  List<Place>? places;
-  List<PlacePhotos> placePhotosList = [];
-  List<PlacePhotos> placePhotoUrls = [];
+  late List<TravelLocation> places;
+  //List<PlacePhotos> placePhotosList = [];
+  //List<PlacePhotos> placePhotoUrls = [];
   bool _isDisposed = false;
   String? userEmail;
 
@@ -40,6 +46,8 @@ class _PersonalizeRouteState extends State<PersonalizeRoute> {
   void initState() {
     super.initState();
     _checkLoginStatus();
+    //fetchAndPrintCachedLocations();
+
   }
   @override
   void dispose() {
@@ -57,50 +65,357 @@ class _PersonalizeRouteState extends State<PersonalizeRoute> {
       // print('received photoUrl: $photoURL');
     });
   }
+/*  void fetchAndPrintCachedLocations() async {
+    final cachedLocationDbService = CachedLocationDbService();
+
+    try {
+      // Fetch all cached locations
+      List<CachedLocation> cachedLocations = await cachedLocationDbService.getCachedLocations();
+
+      // Print each cached location's details
+      for (var location in cachedLocations) {
+        print('Main Preference: ${location.mainPreference ?? 'N/A'}');
+
+        // Print secondary preferences if available
+        if (location.secondaryPreferences != null && location.secondaryPreferences!.isNotEmpty) {
+          print('Secondary Preferences: ${location.secondaryPreferences!.join(', ')}');
+        } else {
+          print('Secondary Preferences: N/A');
+        }
+
+        print('Places:');
+        if (location.places != null && location.places!.isNotEmpty) {
+          for (var place in location.places!) {
+            print('  - Display Name: ${place.displayName?.text ?? 'N/A'}');
+            print('    Address: ${place.formattedAddress ?? 'N/A'}');
+            print('    Rating: ${place.rating ?? 'N/A'}'); // Uncomment this line if you want to include the rating
+            print('    Location: Lat ${place.location.latitude}, Lng ${place.location.longitude}'); // Location is non-nullable
+            if (place.photoUrls != null && place.photoUrls!.isNotEmpty) {
+              print('    Photo URLs: ${place.photoUrls!.join(', ')}');
+            }
+            print('    Google Maps URI: ${place.googleMapsUri ?? 'N/A'}');
+            print('    User Rating Count: ${place.userRatingCount ?? 'N/A'}');
+          }
+        } else {
+          print('    No places available');
+        }
+        print('---');
+      }
+    } catch (e) {
+      print('Error fetching cached locations: $e');
+    }
+  }*/
+
 
   List<String> mapInterestsToPlaceTypes(List<String> userInterests) {
-    final placeTypes = <String>[];
+    final subPlaceTypes = <String>[];
     for (var interest in userInterests) {
+      print(interest);
       if (interestToPlaceTypes.containsKey(interest.replaceAll('#', ''))) {
-        placeTypes.addAll(interestToPlaceTypes[interest.replaceAll('#', '')]!);
+        subPlaceTypes.addAll(interestToPlaceTypes[interest.replaceAll('#', '')]!);
       }
     }
+    print('Final list of place types: $subPlaceTypes');
+    return subPlaceTypes;
+  }
+
+  Future<List<String>> getMainPreferences(List<String> userInterests) async {
+    final placeTypes = <String>[];
+
+    for (var interest in userInterests) {
+      // Remove the '#' symbol to match the document name
+      final placeType = interest.replaceFirst('#', '');
+      placeTypes.add(placeType);
+    }
+
     return placeTypes;
   }
 
-  Future<List<Place>> fetchLocations(List<String> userPreferences) async {
+
+
+  Future<List<Place>> fetchLocationsFromFirestore(List<String> userPreferences) async {
+    try {
+      // Log user preferences to see what is being queried
+      debugPrint("User preferences for fetching locations: $userPreferences");
+
+      // Query cached_locations for matching preferences
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('cached_locations')
+          .where('mainPreferences', arrayContainsAny: userPreferences)
+          .get();
+
+      debugPrint("Query executed. Number of documents fetched: ${querySnapshot.docs.length}");
+
+      if (querySnapshot.docs.isNotEmpty) {
+        // Log each document's data to check the structure
+        return querySnapshot.docs.map((doc) {
+          try {
+            final data = doc.data();
+            debugPrint("Processing document: ${doc.id}");
+            debugPrint("Document data: $data");
+
+            // Check if any key in the document is null or has unexpected values
+            data.forEach((key, value) {
+              if (value == null) {
+                debugPrint("Warning: Key '$key' has a null value in document ${doc.id}");
+              }
+            });
+
+            return Place.fromJson(data);
+          } catch (error) {
+            debugPrint("Error mapping document ${doc.id} to Place: $error");
+            debugPrint("Document data causing error: ${doc.data()}");
+            rethrow; // Optionally rethrow to handle it elsewhere
+          }
+        }).toList();
+      } else {
+        debugPrint("No documents found in Firestore matching the query.");
+      }
+    } catch (e) {
+      debugPrint("Error fetching locations from Firestore: $e");
+    }
+    return []; // Return an empty list if no matches found
+  }
+
+
+/*  Future<List<Place>> fetchLocationsFromFirestore() async {
+    try {
+      // Fetch all documents from the cached_locations collection
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('cached_locations')
+          .get();
+
+      debugPrint("Query executed. Number of documents fetched: ${querySnapshot.docs.length}");
+
+      if (querySnapshot.docs.isNotEmpty) {
+        // Return all documents mapped to Place objects
+        return querySnapshot.docs.map((doc) {
+          try {
+            final data = doc.data();
+            debugPrint("Processing document: ${doc.id}");
+            debugPrint("Document data: $data");
+
+            // Map document data to Place object
+            return Place.fromJson(data);
+          } catch (error) {
+            debugPrint("Error mapping document ${doc.id} to Place: $error");
+            debugPrint("Document data causing error: ${doc.data()}");
+            rethrow; // Optionally rethrow to handle it elsewhere
+          }
+        }).toList();
+      } else {
+        debugPrint("No documents found in Firestore.");
+      }
+    } catch (e) {
+      debugPrint("Error fetching locations from Firestore: $e");
+    }
+    return []; // Return an empty list if no documents are found
+  }*/
+
+/*
+  Future<List<Place>> fetchLocationsWithFallback(List<String> userPreferences) async {
+    final placeTypes = mapInterestsToPlaceTypes(userPreferences);
+    debugPrint("Mapped user preferences to place types: $placeTypes");
+
+    // Try to fetch locations from Firestore (checking secondaryPreferences)
+    try {
+      debugPrint("Attempting to fetch locations from Firestore (secondaryPreferences)...");
+
+      QuerySnapshot snapshot = await FirebaseFirestore.instance
+          .collection('cached_locations')
+          .where('secondaryPreferences', arrayContainsAny: placeTypes)
+          .get();
+
+      debugPrint("Query executed. Number of documents fetched: ${snapshot.docs.length}");
+
+      if (snapshot.docs.isNotEmpty) {
+        debugPrint("Locations found in Firestore (secondaryPreferences). Returning Firestore results.");
+        return snapshot.docs.map((doc) {
+          try {
+            final data = doc.data() as Map<String, dynamic>;
+            debugPrint("Processing document: ${doc.id}");
+            debugPrint("Document data: ${data.toString().substring(0, min(100000, data.toString().length))}");
+
+            // Check if 'secondaryPreferences' is null or contains null values
+            if (data['secondaryPreferences'] == null) {
+              debugPrint("Warning: 'secondaryPreferences' is null in document ${doc.id}");
+            } else {
+              final secondaryPreferences = data['secondaryPreferences'];
+              if (secondaryPreferences.contains(null)) {
+                debugPrint("Warning: 'secondaryPreferences' contains null values in document ${doc.id}");
+              }
+            }
+
+            // Check each field for unexpected nulls
+            data.forEach((key, value) {
+              if (value == null) {
+                debugPrint("Warning: Field '$key' has a null value in document ${doc.id}");
+              } else if (key == 'mainPreference' && value is! String) {
+                debugPrint("Error: 'mainPreference' should be a String but got: ${value.runtimeType} in document ${doc.id}");
+              }
+              // Add more specific checks for fields if necessary
+            });
+
+            // Return Place object if no issues with data
+            return Place.fromJson(data);
+          } catch (error) {
+            debugPrint("Error mapping document ${doc.id} to Place: $error");
+            debugPrint("Document data causing error: ${doc.data()}");
+            rethrow; // Optionally rethrow to handle it elsewhere
+          }
+        }).toList();
+      } else {
+        debugPrint("No documents found in Firestore matching the query.");
+      }
+    } catch (e) {
+      debugPrint("Error fetching locations from Firestore (secondaryPreferences): $e");
+    }
+
+    // Fallback to Google API
+    try {
+      debugPrint("Fetching locations from Google API as fallback...");
+      List<Place> googleApiResults = await fetchLocationsFromGoogleAPI(placeTypes);
+      debugPrint("Successfully fetched locations from Google API.");
+      return googleApiResults;
+    } catch (e) {
+      debugPrint("Error fetching locations from Google API: $e");
+      return [];
+    }
+  }*/
+
+ /* Future<List<Place>> fetchLocationsWithFallback(List<String> userPreferences) async {
+    final subPlaceTypes = mapInterestsToPlaceTypes(userPreferences);
+    debugPrint("Mapped user preferences to place types: $subPlaceTypes");
+
+    // Try to fetch locations from Firestore (checking secondaryPreferences)
+    try {
+      debugPrint("Attempting to fetch locations from Firestore (secondaryPreferences)...");
+
+      // Use CachedLocationDbService to get cached locations
+      final cachedLocationDbService = CachedLocationDbService();
+      final cachedLocations = await cachedLocationDbService.getCachedLocations();
+
+      // Filter locations based on secondary preferences
+      final filteredLocations = <Place>[];
+      for (var cachedLocation in cachedLocations) {
+        if (cachedLocation.secondaryPreferences != null &&
+            cachedLocation.secondaryPreferences!.any((pref) => subPlaceTypes.contains(pref))) {
+          debugPrint("Found matching locations in cached data.");
+          if (cachedLocation.places != null) {
+            for (var place in cachedLocation.places!) {
+              filteredLocations.add(place);
+            }
+          }
+        }
+      }
+
+      if (filteredLocations.isNotEmpty) {
+        debugPrint("Locations found in Firestore (secondaryPreferences). Returning Firestore results.");
+        return filteredLocations;
+      } else {
+        debugPrint("No matching locations found in cached Firestore data.");
+      }
+    } catch (e) {
+      debugPrint("Error fetching locations from Firestore (secondaryPreferences): $e");
+    }
+
+    // Fallback to Google API if no results found in Firestore
+    try {
+      debugPrint("Fetching locations from Google API as fallback...");
+      List<Place> googleApiResults = await fetchLocationsFromGoogleAPI(subPlaceTypes);
+      debugPrint("Successfully fetched locations from Google API.");
+      return googleApiResults;
+    } catch (e) {
+      debugPrint("Error fetching locations from Google API: $e");
+      return [];
+    }
+  }
+
+*/
+  Future<List<TravelLocation>> fetchLocationsWithFallback(List<String> userPreferences) async {
+    final subPlaceTypes = mapInterestsToPlaceTypes(userPreferences);
+    final placeTypes = await getMainPreferences(userPreferences);
+    debugPrint("Mapped user preferences to place types: $subPlaceTypes");
+
+    // Initialize a list to hold TravelLocation objects
+    final List<TravelLocation> resultLocations = [];
+
+    try {
+      debugPrint("Attempting to fetch locations from Firestore (secondaryPreferences)...");
+
+      for (var placeType in placeTypes) {
+        final activityTypeDoc = await FirebaseFirestore.instance
+            .collection('travel_locations')
+            .doc(placeType)
+            .get();
+
+        if (activityTypeDoc.exists) {
+          // Parse the Firestore document into an ActivityType instance
+          final activityType = ActivityType.fromFirestore(
+            placeType,
+            activityTypeDoc.data()!,
+          );
+
+          // Add the parsed TravelLocation objects to the result list
+          resultLocations.addAll(activityType.locations); // Add all locations
+        }
+      }
+    } catch (e) {
+      debugPrint("Error fetching locations from Firestore: $e");
+    }
+
+    // If Firestore fetch fails, fallback to Google API call
+    if (resultLocations.isEmpty) {
+      debugPrint("No locations found in Firestore. Falling back to Google API call...");
+
+      // Assuming you have a method to fetch locations from Google API
+      //resultLocations.addAll(await fetchLocationsFromGoogleAPI(userPreferences));
+    }
+
+    return resultLocations; // Return the list of TravelLocation objects
+  }
+
+
+
+
+  Future<List<Place>> fetchLocationsFromGoogleAPI(List<String> userPreferences) async {
     final placeTypes = mapInterestsToPlaceTypes(userPreferences);
     final query = placeTypes.join('|');
 
     final url = Uri.parse(
-        'https://places.googleapis.com/v1/places:searchText?fields=places.id,places.formattedAddress,places.googleMapsUri,places.location,places.photos,places.displayName&key=$googlePlacesApiKey'
-    );
+        'https://placess.googleapis.com/v1/places:searchText?fields=places.id,places.formattedAddress,places.googleMapsUri,places.location,places.photos,places.displayName&key=$googlePlacesApiKey');
 
     final requestBody = {
       "textQuery": query,
     };
 
-    final response = await http.post(
-      url,
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode(requestBody),
-    );
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(requestBody),
+      );
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      if (data != null && data['places'] != null) {
-        final results = data['places'] as List<dynamic>;
-        return results.map<Place>((json) => Place.fromJson(json)).toList();
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data != null && data['places'] != null) {
+          final results = data['places'] as List<dynamic>;
+          return results.map<Place>((json) => Place.fromJson(json)).toList();
+        } else {
+          throw Exception('No results found or invalid response format');
+        }
       } else {
-        throw Exception('No results found or invalid response format');
+        throw Exception('Failed to fetch locations: ${response.body}');
       }
-    } else {
-      throw Exception('Failed to fetch locations: ${response.body}');
+    } catch (e) {
+      debugPrint("Error fetching locations from Google API: $e");
+      return [];
     }
   }
+
 
   /*Future<List<PlacePhotos>> getPhotoUrls(List<Place> places) async {
 
@@ -148,15 +463,17 @@ class _PersonalizeRouteState extends State<PersonalizeRoute> {
 
   Future<void> getRecommendedLocations() async {
     try {
-      places = await fetchLocations(selectedInterests);
+      places = await fetchLocationsWithFallback(selectedInterests);
+      //places = await fetchLocationsFromFirestore();
+      List<String> placeTypes = await mapInterestsToPlaceTypes(selectedInterests);
       if (!_isDisposed) {
-        setState(() {});  // Ensure widget is still mounted
+        setState(() {}); // Update the UI with the fetched places
       }
     } catch (e) {
       print("Error fetching recommended locations: $e");
     }
-    //await getimage();
   }
+
 /*
   Future<void> getimage() async {
     try {
@@ -307,7 +624,7 @@ class _PersonalizeRouteState extends State<PersonalizeRoute> {
                             MaterialPageRoute(
                               builder: (context) => SelectPersonalizeRoute(
 
-                                place: places!,
+                                place: places,
                               ),
                             ),
                           );

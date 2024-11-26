@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lonewolf/constant/constant.dart';
 import 'package:lonewolf/models/popular_places.dart';
 import 'package:lonewolf/pages/places/recommended.dart';
+import 'package:lonewolf/pages/places/recommended_for_city.dart';
 import 'package:lonewolf/widget/carousel_pro/lib/carousel_pro.dart';
 
 class Place extends StatefulWidget {
@@ -72,7 +73,7 @@ class PlaceState extends State<Place> {
           //topDestination(),
           // Top Destinations End
           // Recommended Start
-          Recommended(),
+          RecommendedForCity(city: widget.title!,),
           // Recommended End
         ],
       ),

@@ -1,18 +1,18 @@
 import 'Location.dart';
 
-class Location {
+class JourneyLocation {
   final String name;
   final String imageUrl;
   final List<String> hashtags;
 
-  Location({
+  JourneyLocation({
     required this.name,
     required this.imageUrl,
     required this.hashtags,
   });
 
-  factory Location.fromJson(Map<String, dynamic> json) {
-    return Location(
+  factory JourneyLocation.fromJson(Map<String, dynamic> json) {
+    return JourneyLocation(
       name: json['name'] ?? '',
       imageUrl: json['imageUrl'] ?? '',
       hashtags: List<String>.from(json['hashtags'] ?? []),

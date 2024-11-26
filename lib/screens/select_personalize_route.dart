@@ -1,6 +1,8 @@
+
 import 'dart:convert';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:lonewolf/models/travel_locations.dart';
 import 'package:lottie/lottie.dart';
 import 'package:http/http.dart' as http;
 import 'package:lonewolf/models/Location.dart';
@@ -11,9 +13,10 @@ import 'package:lonewolf/screens/personalize_route.dart';
 import 'package:lonewolf/models/constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../models/Preferences.dart';
-import 'package:lonewolf/models/JourneyEntry .dart';
+//import '../models/Preferences.dart';
+import 'package:lonewolf/models/JourneyEntry.dart';
 import 'package:lonewolf/services/personal_journey_db_service.dart';
+import 'package:lonewolf/models/new_places.dart';
 
 
 
@@ -47,7 +50,7 @@ class LoadingScreen extends StatelessWidget {
 
 class SelectPersonalizeRoute extends StatefulWidget {
   //final User loggedUser;
-  final List<Place> place;
+  final List<TravelLocation> place;
 
   //final List<PlacePhotos> placePhotoUrls ;
 
@@ -55,7 +58,7 @@ class SelectPersonalizeRoute extends StatefulWidget {
 
   const SelectPersonalizeRoute({
     super.key,
-   // required this.loggedUser,
+    // required this.loggedUser,
     required this.place,
     //required this.placePhotoUrls,
 
@@ -70,10 +73,10 @@ class _SelectPersonalizeRouteState extends State<SelectPersonalizeRoute> {
   bool _isLoading = true;
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final LocationDbService _locationDbService = LocationDbService();
-  List<Location> locations = [];
+  List<JourneyLocation> locations = [];
   var  daycount = 0;
-  List<PlacePhotos> placePhotosList = [];
-  List<PlacePhotos> placePhotoUrls = [];
+  //List<PlacePhotos> placePhotosList = [];
+  //List<PlacePhotos> placePhotoUrls = [];
   //List<Preflocation> preflocations = [];
   String? _selectedDay = '01';
   Stream? _userJourney;
@@ -85,8 +88,19 @@ class _SelectPersonalizeRouteState extends State<SelectPersonalizeRoute> {
     super.initState();
     _checkLoginStatus();
     _fetchData();
-    getimage();
+    //getimage();
+    _printPlaces();
     print('Places length: ${widget.place.length}'); // Debug log
+  }
+
+  // Function to print place details to the console
+  void _printPlaces() {
+    for (var place in widget.place) {
+      print('Place name: ${place.displayName}');
+      //print('Place id: ${place.id}');
+      // You can print other properties as needed, like:
+      // print('Place photo URL: ${place.photoUrl}');
+    }
   }
 
   Future<void> _checkLoginStatus() async {
@@ -98,6 +112,7 @@ class _SelectPersonalizeRouteState extends State<SelectPersonalizeRoute> {
     });
   }
 
+/*
   Future<List<PlacePhotos>> getPhotoUrls(List<Place> places) async {
 
 
@@ -109,7 +124,7 @@ class _SelectPersonalizeRouteState extends State<SelectPersonalizeRoute> {
           final photoUrl = Uri.parse(
             'https://places.googleapis.com/v1/$photoPath/media?key=$googlePlacesApiKey&maxHeightPx=600&maxWidthPx=600&skipHttpRedirect=true',
           );
-          //print('Fetching photo for path: $photoPath');
+          print('Fetching photo for path: $photoPath');
           photoFutures.add(_fetchPhotoUrl(photoUrl, photoPath));
         }
 
@@ -163,6 +178,7 @@ class _SelectPersonalizeRouteState extends State<SelectPersonalizeRoute> {
     }
   }
 
+*/
 
   Future<void> _fetchData() async {
     locations = await _locationDbService.getLocations();
@@ -179,6 +195,7 @@ class _SelectPersonalizeRouteState extends State<SelectPersonalizeRoute> {
         setState(() {
           _dayItems = _generateDayItems(dateDifference);
           daycount = dateDifference;
+          _isLoading = false;
         });
       }
     });
@@ -202,159 +219,163 @@ class _SelectPersonalizeRouteState extends State<SelectPersonalizeRoute> {
     return _isLoading
         ? LoadingScreen()
         : Scaffold(
-      appBar: AppBar(
-        centerTitle: true,
-        title: Image.asset(
-          'assets/images/Logo1.png',
-          height: 30.0,
-        ),
-        backgroundColor: const Color(0xFF00B4DB),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.location_on_outlined),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) =>
-                    ViewPersonalizeRoute(/*loggedUser: widget.loggedUser*/),
+        appBar: AppBar(
+          centerTitle: true,
+          title: Image.asset(
+            'assets/images/Logo1.png',
+            height: 30.0,
+          ),
+          backgroundColor: const Color(0xFF00B4DB),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.location_on_outlined),
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      ViewPersonalizeRoute(/*loggedUser: widget.loggedUser*/),
+                ),
               ),
             ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout_outlined),
-            onPressed: () async {
-              await _auth.signOut();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Logged out successfully!'),
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
-            },
-          ),
-        ],
-      ),
-      body:
-      Stack( // 1. Wrap ListView.builder in a Stack
-          children: [ListView.builder(
-        padding: const EdgeInsets.all(10.0),
-        itemCount: widget.place.length,
-        itemBuilder: (context, index) {
-          final place = widget.place[index];
-          final photoUrl = placePhotoUrls[index];
-          //print("placeindex $placePhotoUrls[index]");
-
-          // Check if the IDs match and determine the image source
-          final imageSource = (photoUrl != null &&
-              photoUrl.photoUrls.isNotEmpty &&
-              place.id == photoUrl.placeId)
-              ? photoUrl.photoUrls.first
-              : 'https://i.postimg.cc/hPZQ23q6/DALL-E-2024-10-24-21-56-40-A-friendly-illustration-showing-a-cute-cartoon-character-holding-a-wren.jpg';
-
-          return Card(
-            margin: const EdgeInsets.symmetric(vertical: 10.0),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(15.0),
-            ),
-            elevation: 8.0,
-            shadowColor: Colors.grey.withOpacity(0.5),
-            clipBehavior: Clip.antiAlias,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Image with rounded corners
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(15.0),
-                  child: Image.network(
-                    imageSource,
-                    height: 250.0,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
+            IconButton(
+              icon: const Icon(Icons.logout_outlined),
+              onPressed: () async {
+                await _auth.signOut();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Logged out successfully!'),
+                    behavior: SnackBarBehavior.floating,
                   ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(15.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        place.displayNameText,
-                        style: const TextStyle(
-                          fontSize: 18.0,
-                          fontWeight: FontWeight.bold,
+                );
+              },
+            ),
+          ],
+        ),
+        body:
+        Stack(
+          children: [
+            // ListView.builder wrapped in Expanded to take up all available space
+            Positioned.fill( // Ensures ListView takes full space minus Positioned widget
+              child: ListView.builder(
+                padding: const EdgeInsets.all(10.0),
+                itemCount: widget.place.length,
+                itemBuilder: (context, index) {
+                  final place = widget.place[index];
+
+                  // Use a default image if no photo URL exists for the place
+                  final imageSource = (place.photoUrls.isNotEmpty)
+                      ? place.photoUrls[0] // Safely access the first item if the list is not empty
+                      : 'https://i.postimg.cc/hPZQ23q6/DALL-E-2024-10-24-21-56-40-A-friendly-illustration-showing-a-cute-cartoon-character-holding-a-wren.jpg'; // Default image
+
+                  return Card(
+                    margin: const EdgeInsets.symmetric(vertical: 10.0),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15.0),
+                    ),
+                    elevation: 8.0,
+                    shadowColor: Colors.grey.withOpacity(0.5),
+                    clipBehavior: Clip.antiAlias,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Image with rounded corners
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(15.0),
+                          child: Image.network(
+                            imageSource,
+                            height: 250.0,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 8.0),
-                      Row(
-                        children: [
-                          const Text('Which day to visit?  '),
-                          const Spacer(),
-                          DropdownButton<String>(
-                            value: _selectedDay,
-                            items: _dayItems,
-                            onChanged: (value) {
-                              setState(() {
-                                _selectedDay = value!;
-                              });
-                            },
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 15.0),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 15.0,
-                              vertical: 10.0,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10.0),
-                            ),
-                          ),
-                          icon: const Icon(Icons.add),
-                          label: const Text('Add to Trip'),
-                          onPressed: () {
-                            final selectedPlace = widget.place[index];
-                            final selectedPhotoUrl = placePhotoUrls[index];
-
-                            JourneyEntry journeyEntry = JourneyEntry(
-                              day: _selectedDay!,
-                              email: userEmail!,
-                              locationName: selectedPlace.displayNameText,
-                              placeId: selectedPlace.id,
-                              address: selectedPlace.formattedAddress,
-                              googleMapsUri: selectedPlace.googleMapsUri,
-                              latitude: selectedPlace.latitude,
-                              longitude: selectedPlace.longitude,
-                              photoUrls: selectedPhotoUrl.photoUrls,
-                              daycount: daycount,
-                            );
-
-                            PersonalJourneyService().addJourney(
-                                userEmail!, journeyEntry.toJson());
-
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                    '${selectedPlace.displayNameText} added to your trip!'),
-                                behavior: SnackBarBehavior.floating,
-                                backgroundColor: Colors.green,
-                                duration: const Duration(seconds: 2),
+                        Padding(
+                          padding: const EdgeInsets.all(15.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                place.displayName.toString(),
+                                style: const TextStyle(
+                                  fontSize: 18.0,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                            );
-                          },
+                              const SizedBox(height: 8.0),
+                              Row(
+                                children: [
+                                  const Text('Which day to visit?  '),
+                                  const Spacer(),
+                                  DropdownButton<String>(
+                                    value: _selectedDay,
+                                    items: _dayItems,
+                                    onChanged: (value) {
+                                      setState(() {
+                                        _selectedDay = value!;
+                                      });
+                                    },
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 15.0),
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: ElevatedButton.icon(
+                                  style: ElevatedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 15.0,
+                                      vertical: 10.0,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10.0),
+                                    ),
+                                  ),
+                                  icon: const Icon(Icons.add),
+                                  label: const Text('Add to Trip'),
+                                  onPressed: () {
+                                    final selectedPlace = widget.place[index];
+
+                                    JourneyEntry journeyEntry = JourneyEntry(
+                                      day: _selectedDay ?? '01', // Default to '01' if _selectedDay is null
+                                      email: userEmail ?? 'default@example.com', // Default email if null
+                                      description: selectedPlace.description ?? 'Unknown Location', // Default name if null
+                                      city: selectedPlace.city ?? '', // Default empty string if id is null
+                                      openHours: selectedPlace.openHours ?? 'Unknown Address', // Default if null
+                                      priceRange: selectedPlace.priceRange ?? '',
+                                      userRating: selectedPlace.userRating ,// Default empty string if null
+                                      latitude: selectedPlace.latitude ?? 0.0, // Default 0.0 if null
+                                      longitude: selectedPlace.longitude ?? 0.0, // Default 0.0 if null
+                                      photoUrls: selectedPlace.photoUrls ?? [], // Default empty list if null
+                                      dayCount: daycount,
+                                      locationName: selectedPlace.displayName,
+                                    );
+
+
+                                    PersonalJourneyService().addJourney(
+                                        userEmail!, journeyEntry.toFirestore());
+
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                            '${selectedPlace.displayName.toString()} added to your trip!'),
+                                        behavior: SnackBarBehavior.floating,
+                                        backgroundColor: Colors.green,
+                                        duration: const Duration(seconds: 2),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+                      ],
+                    ),
+                  );
+                },
+              ),
             ),
-          );
-        },
-      ),
+
+            // Positioned button at the bottom of the screen
             Positioned(
               bottom: 20.0,
               left: 20.0,
@@ -369,14 +390,14 @@ class _SelectPersonalizeRouteState extends State<SelectPersonalizeRoute> {
                 ),
                 child: const Text(
                   'Generate Optimize Route',
-                  style: TextStyle(fontSize: 18.0, color: Colors.black ), selectionColor: Colors.black,
+                  style: TextStyle(fontSize: 18.0, color: Colors.black),
                 ),
-                  onPressed: () => launch(
-                      'https://maps.app.goo.gl/PWhYGEJzFYHqXM5b6'),
+                onPressed: () => launch('https://maps.app.goo.gl/PWhYGEJzFYHqXM5b6'),
               ),
             ),
           ],
-      ),
+        )
+
     );
 
   }

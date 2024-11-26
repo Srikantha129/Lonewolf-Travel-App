@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:page_transition/page_transition.dart';
@@ -64,7 +63,7 @@ class HomneState extends ConsumerState<Homne> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Hello, $displayName',
+                      'Hello, $displayName',  //'Hello, ${displayName?.split(' ').first ?? 'User'}'
                       style: smallBoldGreyTextStyle,
                     ),
                     Text(
@@ -80,7 +79,7 @@ class HomneState extends ConsumerState<Homne> {
                         PageTransition(
                             duration: const Duration(milliseconds: 700),
                             type: PageTransitionType.fade,
-                            child: Profile()));
+                            child: const Profile()));
                   },
                   child: Container(
                     width: 60.0,
@@ -160,7 +159,7 @@ class HomneState extends ConsumerState<Homne> {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Text('Places to Visit', style: blackHeadingTextStyle),
-                  Text('View all', style: smallBoldGreyTextStyle),
+                  //Text('View all', style: smallBoldGreyTextStyle),
                 ],
               ),
             ),
@@ -264,7 +263,7 @@ class HomneState extends ConsumerState<Homne> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text('Popular Experiences', style: blackHeadingTextStyle),
-                  Text('View all', style: smallBoldGreyTextStyle),
+                  //Text('Check them', style: smallBoldGreyTextStyle),
                 ],
               ),
             ),

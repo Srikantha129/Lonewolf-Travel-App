@@ -9,39 +9,41 @@ import 'package:lonewolf/services/hotels_db_service.dart';
 import 'package:lonewolf/providers/hotels_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-
-class HotelList extends ConsumerWidget {
+class HotelList extends ConsumerStatefulWidget {
   const HotelList({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  _HotelListState createState() => _HotelListState();
+}
+
+class _HotelListState extends ConsumerState<HotelList> {
+  final TextEditingController searchController = TextEditingController();
+  String searchQuery = '';
+
+  @override
+  Widget build(BuildContext context) {
     final hotelAsyncValue = ref.watch(hotelStreamProvider);
 
     return Scaffold(
       backgroundColor: whiteColor,
-      /*appBar: AppBar(
-        backgroundColor: whiteColor,
-        elevation: 1.0,
-        titleSpacing: 0.0,
-        centerTitle: true,
-        automaticallyImplyLeading: false,
-        //title: Text('Hotel', style: appBarTextStyle),
-      ),*/
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           hotelAsyncValue.when(
             data: (hotels) {
-              debugPrint("received hotel datas: $hotels");
-              // Pass the data to the map view if needed
+              debugPrint("Received hotel data: $hotels");
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => HotelOnMap(hotelList: hotels,),
+                  builder: (context) => HotelOnMap(hotelList: hotels),
                 ),
               );
             },
-            loading: () {},
-            error: (error, stack) {},
+            loading: () {
+              debugPrint("Loading hotel data...");
+            },
+            error: (error, stack) {
+              debugPrint("Error loading hotel data: $error");
+            },
           );
         },
         backgroundColor: whiteColor,
@@ -50,10 +52,71 @@ class HotelList extends ConsumerWidget {
           color: primaryColor,
         ),
       ),
-      body: hotelAsyncValue.when(
-        data: (hotels) => _buildHotelList(context, hotels),
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => const Center(child: Text('Error loading hotels')),
+      body: Column(
+        children: [
+          // Search Bar
+          Container(
+            height: 55.0,
+            padding: EdgeInsets.all(fixPadding * 1.5),
+            margin: EdgeInsets.all(fixPadding * 2.0),
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: whiteColor,
+              borderRadius: BorderRadius.circular(15.0),
+              border: Border.all(width: 1.0, color: greyColor.withOpacity(0.6)),
+            ),
+            child: TextField(
+              controller: searchController,
+              onChanged: (query) {
+                setState(() {
+                  searchQuery = query.toLowerCase(); // Update search query
+                });
+              },
+              decoration: InputDecoration(
+                hintText: 'Search hotels',
+                hintStyle: greyNormalTextStyle,
+                prefixIcon: const Icon(Icons.search),
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.symmetric(
+                  vertical: fixPadding * 0.78,
+                ),
+              ),
+            ),
+          ),
+          // Hotel List
+          Expanded(
+            child: hotelAsyncValue.when(
+              data: (hotels) {
+                final filteredHotels = hotels
+                    .where((hotel) =>
+                hotel.name.toLowerCase().contains(searchQuery) ||
+                    (hotel.city ?? '').toLowerCase().contains(searchQuery))
+                    .toList();
+                return _buildHotelList(context, filteredHotels);
+              },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (error, stack) => Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.error, color: Colors.red, size: 50),
+                    const SizedBox(height: 10),
+                    const Text(
+                      'Failed to load hotels. Please try again.',
+                      style: TextStyle(color: Colors.red),
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        ref.refresh(hotelStreamProvider);
+                      },
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -75,7 +138,6 @@ class HotelList extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.center,
             itemBuilder: (context, index) {
               final item = limitedHotelList[index];
-              //debugPrint('pricee:${item.avDates?.first.values.first ?? '51'}');
 
               return InkWell(
                 onTap: () {
@@ -90,7 +152,6 @@ class HotelList extends ConsumerWidget {
                     ),
                   );
                 },
-
                 child: Container(
                   width: width - fixPadding * 4.0,
                   margin: EdgeInsets.only(
@@ -112,7 +173,7 @@ class HotelList extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Hero(
-                        tag: item.name,
+                        tag: '${item.hotelId}-${item.name}',
                         child: Container(
                           width: width - fixPadding * 4.0,
                           height: 200.0,
@@ -122,7 +183,7 @@ class HotelList extends ConsumerWidget {
                             ),
                             image: DecorationImage(
                               image: AssetImage(
-                                item.photoUrls!.first, // Placeholder for image URL
+                                item.photoUrls!.first,
                               ),
                               fit: BoxFit.cover,
                             ),
@@ -144,12 +205,10 @@ class HotelList extends ConsumerWidget {
                                     item.name,
                                     style: blackBigTextStyle,
                                     maxLines: 1,
-                                    overflow: TextOverflow.ellipsis, // Prevents overflow for long names
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                   const SizedBox(height: 5.0),
                                   Row(
-                                    mainAxisAlignment: MainAxisAlignment.start,
-                                    crossAxisAlignment: CrossAxisAlignment.center,
                                     children: [
                                       ratingBar(item.ranking),
                                       const SizedBox(width: 5.0),
@@ -158,8 +217,6 @@ class HotelList extends ConsumerWidget {
                                   ),
                                   const SizedBox(height: 5.0),
                                   Row(
-                                    mainAxisAlignment: MainAxisAlignment.start,
-                                    crossAxisAlignment: CrossAxisAlignment.center,
                                     children: [
                                       Icon(
                                         Icons.location_on,
@@ -168,19 +225,18 @@ class HotelList extends ConsumerWidget {
                                       ),
                                       const SizedBox(width: 5.0),
                                       Text(
-                                        item.city ?? 'Unknown location', // Provide a fallback for null location
+                                        item.city ?? 'Unknown location',
                                         style: greySmallTextStyle,
                                         maxLines: 1,
-                                        overflow: TextOverflow.ellipsis, // Prevents overflow
+                                        overflow: TextOverflow.ellipsis,
                                       ),
                                     ],
                                   ),
                                 ],
                               ),
                             ),
-                            const SizedBox(width: 10.0), // Add some spacing between the two columns
+                            const SizedBox(width: 10.0),
                             Column(
-                              mainAxisAlignment: MainAxisAlignment.start,
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
                                 Text(
@@ -194,7 +250,6 @@ class HotelList extends ConsumerWidget {
                           ],
                         ),
                       ),
-
                     ],
                   ),
                 ),
@@ -206,47 +261,14 @@ class HotelList extends ConsumerWidget {
     );
   }
 
-
-
-
-  ratingBar(number) {
+  Widget ratingBar(int number) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.start,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        // 1 Star
-        Icon(
-            (number == 1 ||
-                    number == 2 ||
-                    number == 3 ||
-                    number == 4 ||
-                    number == 5)
-                ? Icons.star
-                : Icons.star_border,
-            color: Colors.lime[600]),
-
-        // 2 Star
-        Icon(
-            (number == 2 || number == 3 || number == 4 || number == 5)
-                ? Icons.star
-                : Icons.star_border,
-            color: Colors.lime[600]),
-
-        // 3 Star
-        Icon(
-            (number == 3 || number == 4 || number == 5)
-                ? Icons.star
-                : Icons.star_border,
-            color: Colors.lime[600]),
-
-        // 4 Star
-        Icon((number == 4 || number == 5) ? Icons.star : Icons.star_border,
-            color: Colors.lime[600]),
-
-        // 5 Star
-        Icon((number == 5) ? Icons.star : Icons.star_border,
-            color: Colors.lime[600]),
-      ],
+      children: List.generate(5, (index) {
+        return Icon(
+          index < number ? Icons.star : Icons.star_border,
+          color: Colors.lime[600],
+        );
+      }),
     );
   }
 }

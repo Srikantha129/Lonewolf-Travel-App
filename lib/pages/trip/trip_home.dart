@@ -7,6 +7,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../screens/personalize_route.dart';
 import '../../services/journey_db_service.dart';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:convert';
+import 'dart:convert';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+
 class TripHome extends StatefulWidget {
   @override
   _TripHomeState createState() => _TripHomeState();
@@ -18,6 +26,7 @@ class _TripHomeState extends State<TripHome> {
   void initState() {
     super.initState();
     _checkLoginStatus();
+    getSampleDocumentAsJson();
 
   }
   Future<void> _checkLoginStatus() async {
@@ -28,6 +37,56 @@ class _TripHomeState extends State<TripHome> {
       print('received userEmail: $userEmail');
     });
   }
+
+
+
+
+  Future<void> getSampleDocumentAsJson() async {
+    final docRef = FirebaseFirestore.instance.collection('cached_locations').doc('Adventure');
+
+    final docSnapshot = await docRef.get();
+    if (docSnapshot.exists) {
+      final data = docSnapshot.data();
+      if (data != null) {
+        // Convert the map to a JSON-friendly format
+        final jsonFriendlyData = data.map((key, value) {
+          if (value is Timestamp) {
+            // Convert Timestamp to ISO8601 string
+            return MapEntry(key, value.toDate().toIso8601String());
+          }
+          return MapEntry(key, value);
+        });
+
+        // Convert to JSON string
+        final jsonData = jsonEncode(jsonFriendlyData);
+
+        // Save to app's document directory
+        await saveJsonToFile(jsonData, 'AdventureData.json');
+      } else {
+        print("Document has no data!");
+      }
+    } else {
+      print("Document does not exist!");
+    }
+  }
+
+  Future<void> saveJsonToFile(String jsonData, String fileName) async {
+    try {
+      // Get the app's document directory
+      final directory = await getApplicationDocumentsDirectory();
+
+      // Create the file path inside the app's document directory
+      final file = File('${directory.path}/$fileName');
+
+      // Write the JSON string to the file
+      await file.writeAsString(jsonData);
+
+      print('JSON file saved at: ${file.path}');
+    } catch (e) {
+      print('Error saving JSON to file: $e');
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {

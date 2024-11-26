@@ -10,24 +10,24 @@ class LocationDbService {
   late final CollectionReference _locationRef;
 
   LocationDbService() {
-    _locationRef = _firestore.collection(COLLECTION_REF).withConverter<Location>(
+    _locationRef = _firestore.collection(COLLECTION_REF).withConverter<JourneyLocation>(
         fromFirestore: (snapshots, _) =>
-            Location.fromJson(
+            JourneyLocation.fromJson(
               snapshots.data()!,
             ),
         toFirestore: (locations, _) => locations.toJson());
   }
 
-  Future<List<Location>> getLocations() async {
+  Future<List<JourneyLocation>> getLocations() async {
     final querySnapshot = await _locationRef.get();
-    return querySnapshot.docs.map((doc) => doc.data() as Location).toList();
+    return querySnapshot.docs.map((doc) => doc.data() as JourneyLocation).toList();
   }
 
-  void addLocation(Location location) async {
+  void addLocation(JourneyLocation location) async {
     _locationRef.add(location);
   }
 
-  void updateLocation(String locationId, Location location) {
+  void updateLocation(String locationId, JourneyLocation location) {
     _locationRef.doc(locationId).update(location.toJson());
   }
 

@@ -20,7 +20,7 @@ class ViewPersonalizeRoute extends StatefulWidget {
 class _ViewPersonalizeRouteState extends State<ViewPersonalizeRoute> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final LocationDbService _locationDbService = LocationDbService();
-  List<Location> locations = [];
+  List<JourneyLocation> locations = [];
   Stream? _userJourney;
   String? userEmail;
 
@@ -53,7 +53,7 @@ class _ViewPersonalizeRouteState extends State<ViewPersonalizeRoute> {
           final locationStream =
               _locationDbService.getLocationByName(locationName);
           await for (final locationSnapshot in locationStream) {
-            final locationData = locationSnapshot.docs.first.data() as Location;
+            final locationData = locationSnapshot.docs.first.data() as JourneyLocation;
             setState(() {
               locations.add(locationData);
             });

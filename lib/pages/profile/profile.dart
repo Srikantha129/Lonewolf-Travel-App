@@ -10,7 +10,36 @@ import 'package:lonewolf/pages/profile/edit_profile.dart';
 import 'package:lonewolf/pages/wallet/wallet.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class Profile extends StatelessWidget {
+class Profile extends StatefulWidget {
+  const Profile({super.key});
+
+  @override
+  _ProfileState createState() => _ProfileState();
+}
+
+class _ProfileState extends State<Profile> {
+  String? photoURL;
+  String? displayName;
+  String? userId;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkLoginStatus();
+  }
+
+  Future<void> _checkLoginStatus() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      photoURL = prefs.getString('userPhoto');
+      displayName = prefs.getString('userName');
+      userId = prefs.getString('userId');
+      debugPrint('received photoUrl: $photoURL');
+      debugPrint('received userId: $userId');
+    });
+  }
+
+
   @override
   Widget build(BuildContext context) {
     double width = MediaQuery.of(context).size.width;
@@ -139,7 +168,7 @@ class Profile extends StatelessWidget {
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(5.0),
                           image: DecorationImage(
-                            image: AssetImage('assets/user.jpg'),
+                            image: NetworkImage(photoURL!),
                             fit: BoxFit.cover,
                           ),
                         ),
@@ -149,12 +178,12 @@ class Profile extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
                           Text(
-                            'Ellison Perry',
+                            '$displayName',
                             style: blackBigTextStyle,
                           ),
                           heightSpace,
                           Text(
-                            '123456789',
+                            'Welcome Back,',
                             style: greySmallTextStyle,
                           ),
                         ],
