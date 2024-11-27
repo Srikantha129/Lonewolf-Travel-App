@@ -412,7 +412,7 @@ class _TripMainState extends State<TripMain> {
       //"departureTime": DateTime.now().toUtc().toIso8601String(),
       "computeAlternativeRoutes": false,
       "routeModifiers": {
-        "avoidTolls": false,
+        "avoidTolls": true,
         "avoidHighways": false,
         "avoidFerries": false,
       },
@@ -443,7 +443,8 @@ class _TripMainState extends State<TripMain> {
       );
 
       if (response.statusCode == 200) {
-        print("Response Data: ${response.body}");
+        //debugPrint("Response Data: ${response.body}", wrapWidth: 10000);
+
 
         // Parse the response
         final responseData = jsonDecode(response.body);
@@ -452,6 +453,29 @@ class _TripMainState extends State<TripMain> {
           print("No routes found in the response.");
           return;
         }
+
+        // response data is already parsed into a map (data)
+        String durationString = responseData['routes'][0]['duration'].toString(); // Ensure it's a string
+        String distanceString = responseData['routes'][0]['distanceMeters'].toString(); // Ensure it's a string
+
+        // Remove the 's' character from the duration string, if present
+        durationString = durationString.replaceAll(RegExp(r'[^0-9]'), ''); // Removes any non-digit characters
+
+        // Convert the strings to integers
+        int durationInSeconds = int.parse(durationString);
+        int distanceInMeters = int.parse(distanceString);
+
+        // Convert duration from seconds to hours and minutes
+        int hours = durationInSeconds ~/ 3600; // Divide by 3600 to get hours
+        int minutes = (durationInSeconds % 3600) ~/ 60; // Get remaining minutes
+
+        // Convert distance from meters to kilometers
+        double distanceInKm = distanceInMeters / 1000.0; // Convert meters to kilometers
+
+        // Print the formatted output
+        print("Duration: $hours hours and $minutes minutes");
+        print("Distance: ${distanceInKm.toStringAsFixed(2)} km");
+
 
         // Initialize an empty list for route points (polylines for all legs)
         List<LatLng> allRoutePoints = [];
@@ -462,8 +486,7 @@ class _TripMainState extends State<TripMain> {
           for (var leg in legs) {
             final polyline = leg['polyline']['encodedPolyline'];
             if (polyline != null) {
-              allRoutePoints.addAll(decodePolyline(
-                  polyline)); // Add the decoded points of this leg
+              allRoutePoints.addAll(decodePolyline(polyline));  // Add the decoded points of this leg
             }
           }
         }
@@ -474,29 +497,49 @@ class _TripMainState extends State<TripMain> {
             markerId: const MarkerId('start'),
             position: LatLng(startLocation!.latitude, startLocation!.longitude),
             infoWindow: const InfoWindow(title: 'Start Location'),
+            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
+            // Start point in green
           ),
           Marker(
             markerId: const MarkerId('end'),
             position: LatLng(endLocation!.latitude, endLocation!.longitude),
             infoWindow: const InfoWindow(title: 'End Location'),
+            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+            // End point in red
           ),
-          ...userJourneys.map((journey) =>
-              Marker(
-                markerId: MarkerId(journey.displayName),
-                position: LatLng(journey.latitude, journey.longitude),
-                infoWindow: InfoWindow(title: journey.displayName),
-              )),
         ];
+
+        final optimizedOrder = routes[0]['optimizedIntermediateWaypointIndex'];
+// Add intermediate markers in the correct order
+        if (optimizedOrder != null) {
+          for (int i = 0; i < optimizedOrder.length; i++) {
+            final index = optimizedOrder[i];
+            final journey = userJourneys[index];
+            markers.add(
+              Marker(
+                markerId: MarkerId('waypoint_$i'),
+                position: LatLng(journey.latitude, journey.longitude),
+                infoWindow: InfoWindow(title: '${i + 1}. ${journey.displayName}'),
+                icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
+                // Waypoints in blue
+              ),
+            );
+          }
+        }
+
+        // Generate Google Maps URL
+        final googleMapsUrl = generateGoogleMapsUrl(optimizedOrder);
+
+        print("Google Maps URL: $googleMapsUrl");
 
         // Navigate to map with the route points and markers
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) =>
-                OptimizedRouteMapPage(
-                  routePoints: allRoutePoints,
-                  markers: markers,
-                ),
+            builder: (context) => OptimizedRouteMapPage(
+              routePoints: allRoutePoints,
+              markers: markers,
+            ),
           ),
         );
       } else {
@@ -505,7 +548,7 @@ class _TripMainState extends State<TripMain> {
     } catch (e) {
       print("Exception: $e");
     }
-  }
+}
 
 
 // function to decode the polyline
@@ -540,7 +583,30 @@ class _TripMainState extends State<TripMain> {
   }
 
 
+// Function to generate the Google Maps URL
+  String generateGoogleMapsUrl(List<dynamic> optimizedOrder) {
+    // Start and end locations as latitude, longitude
+    final start = LatLng(startLocation!.latitude, startLocation!.longitude);
+    final end = LatLng(endLocation!.latitude, endLocation!.longitude);
 
+    // Construct waypoints in the optimized order
+    final waypoints = <String>[];
+
+    if (optimizedOrder != null) {
+      for (var index in optimizedOrder) {
+        final journey = userJourneys[index];
+        final waypoint = '${journey.latitude},${journey.longitude}';
+        waypoints.add(waypoint);
+      }
+    }
+
+    // Create the Google Maps URL
+    final waypointsParam = waypoints.isNotEmpty ? '&waypoints=${waypoints.join('|')}' : '';
+    final googleMapsUrl =
+        'https://www.google.com/maps/dir/?api=1&origin=${start.latitude},${start.longitude}&destination=${end.latitude},${end.longitude}$waypointsParam';
+
+    return googleMapsUrl;
+  }
 
 
 
