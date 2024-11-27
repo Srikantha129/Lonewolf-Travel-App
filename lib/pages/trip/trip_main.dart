@@ -169,7 +169,7 @@ class _TripMainState extends State<TripMain> {
     );
   }
 
-  Widget mustVisit() {
+ /* Widget mustVisit() {
     double width = MediaQuery.of(context).size.width;
 
     return SingleChildScrollView(
@@ -365,6 +365,246 @@ class _TripMainState extends State<TripMain> {
         ],
       ),
     );
+  }*/
+  Widget mustVisit() {
+    double width = MediaQuery.of(context).size.width;
+
+    double totalBudget = 0.0; // Variable to store the total budget
+
+    // Calculate the total budget by adding the median of the price ranges
+    for (var journey in userJourneys) {
+      if (journey.priceRange.isNotEmpty) {
+        // Extracting price range (e.g., "$5 - $10")
+        List<String> priceParts = journey.priceRange.split(' - ');
+        if (priceParts.length == 2) {
+          try {
+            // Print the price range for debugging
+            //print('Processing journey: ${journey.displayName}');
+            //print('Price Range: ${journey.priceRange}');
+            // Parse the lower and upper bounds of the price range
+            double lowerPrice = double.parse(priceParts[0].replaceAll(RegExp(r'[^0-9.]'), ''));
+            double upperPrice = double.parse(priceParts[1].replaceAll(RegExp(r'[^0-9.]'), ''));
+
+            // Calculate the median price
+            double medianPrice = (lowerPrice + upperPrice) / 2;
+
+
+
+            // Print the parsed prices and the median for debugging
+            //print('Lower Price: $lowerPrice, Upper Price: $upperPrice');
+            //print('Median Price: $medianPrice');
+            // Add the median price to the total budget
+            totalBudget += medianPrice;
+          } catch (e) {
+            // Handle any parsing errors if the price range is not in the expected format
+            print('Error parsing price range: ${journey.priceRange}');
+          }
+        }
+      }
+    }
+
+    return SingleChildScrollView(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Heading
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: fixPadding * 2.0),
+            child: Text('Your Travel Destinations', style: blackHeadingTextStyle),
+          ),
+          heightSpace,
+
+          // Total Budget Display
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: fixPadding * 2.0),
+            child: Text(
+              'Total Budget: \$${totalBudget.toStringAsFixed(2)}', // Showing the total budget
+              style: blackBigTextStyle,
+            ),
+          ),
+          heightSpace,
+
+          // List of travel destinations
+          SizedBox(
+            width: width,
+            height: 340.0,
+            child: ListView.builder(
+              itemCount: userJourneys.length,
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              itemBuilder: (context, index) {
+                final journey = userJourneys[index];
+                return Container(
+                  width: 150.0,
+                  margin: (index == userJourneys.length - 1)
+                      ? EdgeInsets.symmetric(horizontal: fixPadding * 2.0)
+                      : EdgeInsets.only(left: fixPadding * 2.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Hero(
+                        tag: journey.displayName,
+                        child: Container(
+                          width: 150.0,
+                          height: 200.0,
+                          decoration: BoxDecoration(
+                            image: DecorationImage(
+                              image: NetworkImage(
+                                  journey.photoUrls.isNotEmpty
+                                      ? journey.photoUrls.first
+                                      : 'default_image_url'), // Fallback image
+                              fit: BoxFit.cover,
+                            ),
+                            borderRadius: BorderRadius.circular(15.0),
+                          ),
+                        ),
+                      ),
+                      heightSpace,
+                      Row(
+                        children: [
+                          Icon(Icons.star, color: Colors.lime[600], size: 16.0),
+                          const SizedBox(width: 5.0),
+                          Text(journey.userRating.toString(), style: blackSmallTextStyle),
+                        ],
+                      ),
+                      const SizedBox(height: 5.0),
+                      Text(
+                        journey.displayName,
+                        style: blackBigTextStyle,
+                        maxLines: 2,
+                      ),
+                      const SizedBox(height: 5.0),
+                      Row(
+                        children: [
+                          Icon(Icons.location_on, color: greyColor, size: 18.0),
+                          Text(journey.city, style: greySmallTextStyle),
+                        ],
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+          heightSpace,
+          heightSpace,
+
+          // Dropdowns for Start and End Location selection
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: fixPadding * 2.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Start Location
+                Text('Select Start Location:', style: blackSmallTextStyle),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 15.0),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey, width: 1.0),
+                    borderRadius: BorderRadius.circular(10.0),
+                  ),
+                  child: DropdownButton<JourneyEntry>(
+                    isExpanded: true,
+                    value: startLocation,
+                    hint: Text('Select Start Location'),
+                    underline: SizedBox(),
+                    onChanged: (JourneyEntry? newValue) {
+                      setState(() {
+                        startLocation = newValue;
+                      });
+                    },
+                    items: [
+                      // Default Location Option
+                      DropdownMenuItem<JourneyEntry>(
+                        value: defaultLocation,
+                        child: Text("Default Location (Katunayaka Airport)"),
+                      ),
+                      ...userJourneys.map<DropdownMenuItem<JourneyEntry>>((JourneyEntry journey) {
+                        return DropdownMenuItem<JourneyEntry>(
+                          value: journey,
+                          child: Text(journey.displayName),
+                        );
+                      }),
+                    ],
+                  ),
+                ),
+                heightSpace,
+
+                // End Location
+                Text('Select End Location:', style: blackSmallTextStyle),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 15.0),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey, width: 1.0),
+                    borderRadius: BorderRadius.circular(10.0),
+                  ),
+                  child: DropdownButton<JourneyEntry>(
+                    isExpanded: true,
+                    value: endLocation,
+                    hint: Text('Select End Location'),
+                    underline: SizedBox(),
+                    onChanged: (JourneyEntry? newValue) {
+                      setState(() {
+                        endLocation = newValue;
+                      });
+                    },
+                    items: [
+                      // Default Location Option
+                      DropdownMenuItem<JourneyEntry>(
+                        value: defaultLocation,
+                        child: Text("Default Location (Katunayaka Airport)"),
+                      ),
+                      ...userJourneys.map<DropdownMenuItem<JourneyEntry>>((JourneyEntry journey) {
+                        return DropdownMenuItem<JourneyEntry>(
+                          value: journey,
+                          child: Text(journey.displayName),
+                        );
+                      }),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          heightSpace,
+          heightSpace,
+
+          // Dropdown to select transport mode
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: fixPadding * 2.0),
+            child: DropdownButton<String>(
+              value: selectedTransportMode,
+              onChanged: (newValue) {
+                setState(() {
+                  selectedTransportMode = newValue!;
+                });
+              },
+              items: transportModes.map<DropdownMenuItem<String>>((String mode) {
+                return DropdownMenuItem<String>(
+                  value: mode,
+                  child: Text(mode),
+                );
+              }).toList(),
+            ),
+          ),
+          heightSpace,
+
+          // Button to generate the optimal route
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: fixPadding * 2.0),
+            child: ElevatedButton(
+              onPressed: startLocation != null && endLocation != null
+                  ? () {
+                generateOptimalRoute();
+              }
+                  : null, // Disable if start or end location is not selected
+              child: Text('Generate Optimal Route'),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
 
@@ -432,7 +672,7 @@ class _TripMainState extends State<TripMain> {
       "Content-Type": "application/json",
       "X-Goog-Api-Key": apiKey,
       "X-Goog-FieldMask":
-      "routes.duration,routes.distanceMeters,routes.legs,routes.optimizedIntermediateWaypointIndex",
+      "routes.duration,routes.distanceMeters,routes.legs,routes.optimizedIntermediateWaypointIndex,routes.warnings",
     };
 
     try {
@@ -454,6 +694,17 @@ class _TripMainState extends State<TripMain> {
           return;
         }
 
+        final warnings = responseData['routes']?[0]['warnings'];
+
+        // Print the warnings if they exist
+        if (warnings != null && warnings.isNotEmpty) {
+          print("Warnings:");
+          for (var warning in warnings) {
+            print(warning);
+          }
+        } else {
+          print("No warnings found.");
+        }
         // response data is already parsed into a map (data)
         String durationString = responseData['routes'][0]['duration'].toString(); // Ensure it's a string
         String distanceString = responseData['routes'][0]['distanceMeters'].toString(); // Ensure it's a string
