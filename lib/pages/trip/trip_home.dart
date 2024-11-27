@@ -187,14 +187,14 @@ class _TripHomeState extends State<TripHome> {
               heightSpace,
               InkWell(
                 borderRadius: BorderRadius.circular(10.0),
-                onTap: () {
+                /*onTap: () {
                   Navigator.push(
                       context,
                       PageTransition(
                           type: PageTransitionType.fade,
                           duration: Duration(milliseconds: 1000),
                           child: TripMain()));
-                },
+                },*/
                 child: Container(
                   margin: EdgeInsets.symmetric(horizontal: fixPadding * 2.0),
                   padding: EdgeInsets.all(fixPadding),
