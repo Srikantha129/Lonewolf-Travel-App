@@ -419,7 +419,7 @@ class _TripMainState extends State<TripMain> {
           Padding(
             padding: EdgeInsets.symmetric(horizontal: fixPadding * 2.0),
             child: Text(
-              'Total Budget: \$${totalBudget.toStringAsFixed(2)}', // Showing the total budget
+              'Pre-Travel Estimated Budget: \$${totalBudget.toStringAsFixed(2)}', // Displaying the calculated budget
               style: blackBigTextStyle,
             ),
           ),
