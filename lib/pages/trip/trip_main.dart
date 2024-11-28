@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:lonewolf/pages/trip/optimized_trip_main.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:lonewolf/constant/constant.dart';
 import 'package:lonewolf/pages/places/place.dart';
@@ -14,6 +15,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../models/JourneyEntry.dart';
 import '../../models/constants.dart';
 import '../../screens/optimized_route_map.dart';
+
+import 'dart:io'; // For File operations
+import 'package:path_provider/path_provider.dart'; // For getting directory paths
 
 class TripMain extends StatefulWidget {
   final String randomString;
@@ -29,12 +33,11 @@ class _TripMainState extends State<TripMain> {
   String? userEmail;
   JourneyEntry? startLocation;
   JourneyEntry? endLocation;
-  List<LatLng> _routePoints = [];
-  String selectedTransportMode = 'Driving'; // Default transport mode
-  List<String> transportModes = ['Driving', 'Walking', 'Cycling']; // Transport modes
+  String selectedTransportMode = 'Public'; // Default transport mode
+  List<String> transportModes = ['Public', 'Tuk Tuk']; // Transport modes
   JourneyEntry? defaultLocation;
   //List<LatLng> _routePoints = []; // Replace with actual polyline points
-  List<Marker> _markers = []; // Replace with actual marker data
+  //List<Marker> _markers = []; // Replace with actual marker data
 
 
   @override
@@ -136,7 +139,7 @@ class _TripMainState extends State<TripMain> {
           //popularDestination(),
           // Popular Destination End
           // Recommended Start
-          Recommended(),
+          const Recommended(),
           // Recommended End
         ],
       ),
@@ -405,24 +408,51 @@ class _TripMainState extends State<TripMain> {
 
     return SingleChildScrollView(
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Heading
+          // Heading with a travel-related icon
           Padding(
             padding: EdgeInsets.symmetric(horizontal: fixPadding * 2.0),
-            child: Text('Your Travel Destinations', style: blackHeadingTextStyle),
-          ),
-          heightSpace,
-
-          // Total Budget Display
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: fixPadding * 2.0),
-            child: Text(
-              'Pre-Travel Estimated Budget: \$${totalBudget.toStringAsFixed(2)}', // Displaying the calculated budget
-              style: blackBigTextStyle,
+            child: Row(
+              children: [
+                const Icon(Icons.airplanemode_active, color: Colors.orange, size: 28.0), // Travel icon
+                const SizedBox(width: 8.0),
+                Text('Your Travel Destinations', style: blackHeadingTextStyle.copyWith(color: Colors.teal)),
+              ],
             ),
           ),
+          heightSpace,
+          heightSpace,
+
+          // Total Budget Display with a soft background
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: fixPadding * 2.0),
+            child: Container(
+              padding: const EdgeInsets.all(16.0),
+              decoration: BoxDecoration(
+                color: Colors.teal.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10.0),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Pre-Travel Estimated Budget: \$${totalBudget.toStringAsFixed(2)}',
+                    style: blackBigTextStyle.copyWith(color: Colors.teal),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    '(Excludes travel costs such as vehicle fees and transportation)',
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          heightSpace,
           heightSpace,
 
           // List of travel destinations
@@ -463,7 +493,7 @@ class _TripMainState extends State<TripMain> {
                       heightSpace,
                       Row(
                         children: [
-                          Icon(Icons.star, color: Colors.lime[600], size: 16.0),
+                          Icon(Icons.star, color: Colors.yellow[700], size: 16.0),
                           const SizedBox(width: 5.0),
                           Text(journey.userRating.toString(), style: blackSmallTextStyle),
                         ],
@@ -471,7 +501,7 @@ class _TripMainState extends State<TripMain> {
                       const SizedBox(height: 5.0),
                       Text(
                         journey.displayName,
-                        style: blackBigTextStyle,
+                        style: blackBigTextStyle.copyWith(color: Colors.teal),
                         maxLines: 2,
                       ),
                       const SizedBox(height: 5.0),
@@ -499,7 +529,7 @@ class _TripMainState extends State<TripMain> {
                 // Start Location
                 Text('Select Start Location:', style: blackSmallTextStyle),
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 15.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 15.0),
                   decoration: BoxDecoration(
                     border: Border.all(color: Colors.grey, width: 1.0),
                     borderRadius: BorderRadius.circular(10.0),
@@ -507,8 +537,8 @@ class _TripMainState extends State<TripMain> {
                   child: DropdownButton<JourneyEntry>(
                     isExpanded: true,
                     value: startLocation,
-                    hint: Text('Select Start Location'),
-                    underline: SizedBox(),
+                    hint: const Text('Select Start Location'),
+                    underline: const SizedBox(),
                     onChanged: (JourneyEntry? newValue) {
                       setState(() {
                         startLocation = newValue;
@@ -518,7 +548,7 @@ class _TripMainState extends State<TripMain> {
                       // Default Location Option
                       DropdownMenuItem<JourneyEntry>(
                         value: defaultLocation,
-                        child: Text("Default Location (Katunayaka Airport)"),
+                        child: const Text("Default Location (Katunayaka Airport)"),
                       ),
                       ...userJourneys.map<DropdownMenuItem<JourneyEntry>>((JourneyEntry journey) {
                         return DropdownMenuItem<JourneyEntry>(
@@ -534,7 +564,7 @@ class _TripMainState extends State<TripMain> {
                 // End Location
                 Text('Select End Location:', style: blackSmallTextStyle),
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 15.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 15.0),
                   decoration: BoxDecoration(
                     border: Border.all(color: Colors.grey, width: 1.0),
                     borderRadius: BorderRadius.circular(10.0),
@@ -542,8 +572,8 @@ class _TripMainState extends State<TripMain> {
                   child: DropdownButton<JourneyEntry>(
                     isExpanded: true,
                     value: endLocation,
-                    hint: Text('Select End Location'),
-                    underline: SizedBox(),
+                    hint: const Text('Select End Location'),
+                    underline: const SizedBox(),
                     onChanged: (JourneyEntry? newValue) {
                       setState(() {
                         endLocation = newValue;
@@ -553,7 +583,7 @@ class _TripMainState extends State<TripMain> {
                       // Default Location Option
                       DropdownMenuItem<JourneyEntry>(
                         value: defaultLocation,
-                        child: Text("Default Location (Katunayaka Airport)"),
+                        child: const Text("Default Location (Katunayaka Airport)"),
                       ),
                       ...userJourneys.map<DropdownMenuItem<JourneyEntry>>((JourneyEntry journey) {
                         return DropdownMenuItem<JourneyEntry>(
@@ -598,14 +628,31 @@ class _TripMainState extends State<TripMain> {
                   ? () {
                 generateOptimalRoute();
               }
-                  : null, // Disable if start or end location is not selected
-              child: Text('Generate Optimal Route'),
+                  : null,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryColor,
+                padding: const EdgeInsets.symmetric(vertical: 18.0, horizontal: 30.0), // Increased padding for a larger button
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15.0), // More rounded corners for a modern look
+                ),
+                minimumSize: const Size(double.infinity, 55), // Ensures the button takes up full width and has a sufficient height
+              ), // Disable if start or end location is not selected
+              child: const Text(
+                'Generate Optimal Route',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18.0, // Increase font size for better readability
+                ),
+              ),
             ),
           ),
         ],
       ),
     );
   }
+
+
+
 
 
   Future<void> generateOptimalRoute() async {
@@ -693,7 +740,7 @@ class _TripMainState extends State<TripMain> {
           print("No routes found in the response.");
           return;
         }
-
+        //await saveJsonToFile(responseData, 'routes.json');
         final warnings = responseData['routes']?[0]['warnings'];
 
         // Print the warnings if they exist
@@ -727,6 +774,32 @@ class _TripMainState extends State<TripMain> {
         print("Duration: $hours hours and $minutes minutes");
         print("Distance: ${distanceInKm.toStringAsFixed(2)} km");
 
+        // Fare calculation
+        const double lkrToUsd = 295.0;
+        double fareInUSD = 0.0;
+
+        if (selectedTransportMode == 'Tuk Tuk') {
+          double ratePerKm;
+          if (distanceInKm <= 200) {
+            ratePerKm = 50.0;
+          } else if (distanceInKm <= 300) {
+            ratePerKm = 48.0;
+          } else if (distanceInKm <= 500) {
+            ratePerKm = 46.0;
+          } else if (distanceInKm <= 800) {
+            ratePerKm = 43.0;
+          } else {
+            ratePerKm = 40.0;
+          }
+          double fareInLKR = distanceInKm * ratePerKm;
+          fareInUSD = fareInLKR / lkrToUsd;
+        } else if (selectedTransportMode == 'Public') {
+          const double farePerKmLKR = 4.0;
+          double fareInLKR = distanceInKm * farePerKmLKR;
+          fareInUSD = fareInLKR / lkrToUsd;
+        }
+
+        print("Fare for $selectedTransportMode: USD ${fareInUSD.toStringAsFixed(2)}");
 
         // Initialize an empty list for route points (polylines for all legs)
         List<LatLng> allRoutePoints = [];
@@ -783,13 +856,41 @@ class _TripMainState extends State<TripMain> {
 
         print("Google Maps URL: $googleMapsUrl");
 
+        // Save data to Firestore
+       /* final routeDoc = FirebaseFirestore.instance.collection('optimal_route').doc();
+
+        await routeDoc.set({
+          'randomString': widget.randomString,
+          'routeId': routeDoc.id,
+          'email': userEmail,
+          'allRoutePoints': allRoutePoints.map((point) => {
+            'latitude': point.latitude,
+            'longitude': point.longitude,
+          }).toList(),
+          'markers': markers.map((marker) => {
+            'id': marker.markerId.value,
+            'latitude': marker.position.latitude,
+            'longitude': marker.position.longitude,
+            'infoWindow': marker.infoWindow.title,
+          }).toList(),
+          'googleMapsUrl': googleMapsUrl,
+          'hours':hours,
+          'minutes': minutes,
+          'distance': distanceInKm.toStringAsFixed(2),
+        });*/
         // Navigate to map with the route points and markers
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => OptimizedRouteMapPage(
+            builder: (context) => OptimizedTripMain(
               routePoints: allRoutePoints,
               markers: markers,
+              fare:fareInUSD,
+              transportMode:selectedTransportMode,
+              randomString: widget.randomString,
+              hours:hours,
+              minutes:minutes,
+              distance:distanceInKm,
             ),
           ),
         );
@@ -833,7 +934,24 @@ class _TripMainState extends State<TripMain> {
     return polyline;
   }
 
+ /* Future<void> saveJsonToFile(Map<String, dynamic> jsonData, String fileName) async {
+    try {
+      // Get the documents directory
+      final directory = await getApplicationDocumentsDirectory();
+      final filePath = '${directory.path}/$fileName';
 
+      // Convert JSON to string
+      final jsonString = jsonEncode(jsonData);
+
+      // Write to file
+      final file = File(filePath);
+      await file.writeAsString(jsonString);
+
+      print('File saved to: $filePath');
+    } catch (e) {
+      print('Error saving file: $e');
+    }
+  }*/
 // Function to generate the Google Maps URL
   String generateGoogleMapsUrl(List<dynamic> optimizedOrder) {
     // Start and end locations as latitude, longitude

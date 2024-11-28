@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
@@ -6,10 +7,10 @@ class OptimizedRouteMapPage extends StatelessWidget {
   final List<Marker> markers;
 
   const OptimizedRouteMapPage({
-    Key? key,
+    super.key,
     required this.routePoints,
     required this.markers,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -36,3 +37,5 @@ class OptimizedRouteMapPage extends StatelessWidget {
     );
   }
 }
+
+
