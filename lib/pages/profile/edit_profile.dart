@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lonewolf/constant/constant.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class EditProfile extends StatefulWidget {
   @override
@@ -7,9 +8,12 @@ class EditProfile extends StatefulWidget {
 }
 
 class _EditProfileState extends State<EditProfile> {
-  String name = 'Ellison Perry';
-  String phone = '123456789';
-  String email = 'test@abc.com';
+  String? photoURL;
+  String? displayName;
+  String? userEmail;
+  String name = 'Shaam Amarasinghe';
+  String phone = '+9476 852 1284';
+  String email = 'Shaamamarasinghe2@gmail.com';
   var nameController = TextEditingController();
   var phoneController = TextEditingController();
   var emailController = TextEditingController();
@@ -21,6 +25,17 @@ class _EditProfileState extends State<EditProfile> {
     phoneController.text = phone;
     emailController.text = email;
   }
+
+  Future<void> _checkLoginStatus() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      photoURL = prefs.getString('userPhoto');
+      displayName = prefs.getString('userName');
+      print('received photourl: $photoURL');
+      userEmail = prefs.getString('userEmail');
+    });
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +53,7 @@ class _EditProfileState extends State<EditProfile> {
                 borderRadius: BorderRadius.circular(10.0)),
             child: Container(
               height: 210.0,
-              padding: EdgeInsets.all(20.0),
+              padding: const EdgeInsets.all(20.0),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -296,89 +311,7 @@ class _EditProfileState extends State<EditProfile> {
       );
     }
 
-    changeEmail() {
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (BuildContext context) {
-          // return object of type Dialog
-          return Dialog(
-            elevation: 0.0,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10.0)),
-            child: Container(
-              height: 200.0,
-              padding: EdgeInsets.all(20.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: <Widget>[
-                  Text(
-                    "Change Email",
-                    style: blackBigTextStyle,
-                  ),
-                  SizedBox(
-                    height: 20.0,
-                  ),
-                  TextField(
-                    controller: emailController,
-                    style: blackColorButtonTextStyle,
-                    keyboardType: TextInputType.emailAddress,
-                    decoration: InputDecoration(
-                      hintText: 'Enter Your Email Address',
-                      hintStyle: greySmallTextStyle,
-                    ),
-                  ),
-                  SizedBox(height: 20.0),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: <Widget>[
-                      InkWell(
-                        onTap: () {
-                          Navigator.pop(context);
-                        },
-                        child: Container(
-                          width: (width / 3.5),
-                          alignment: Alignment.center,
-                          padding: EdgeInsets.all(10.0),
-                          decoration: BoxDecoration(
-                            color: Colors.grey[300],
-                            borderRadius: BorderRadius.circular(5.0),
-                          ),
-                          child:
-                              Text('Cancel', style: blackColorButtonTextStyle),
-                        ),
-                      ),
-                      InkWell(
-                        onTap: () {
-                          setState(() {
-                            email = emailController.text;
-                            Navigator.pop(context);
-                          });
-                        },
-                        child: Container(
-                          width: (width / 3.5),
-                          alignment: Alignment.center,
-                          padding: EdgeInsets.all(10.0),
-                          decoration: BoxDecoration(
-                            color: primaryColor,
-                            borderRadius: BorderRadius.circular(5.0),
-                          ),
-                          child: Text(
-                            'Okay',
-                            style: whiteColorButtonTextStyle,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      );
-    }
+
 
     return Scaffold(
       backgroundColor: scaffoldBgColor,
@@ -424,9 +357,12 @@ class _EditProfileState extends State<EditProfile> {
                     borderRadius: BorderRadius.circular(5.0),
                     border: Border.all(width: 2.0, color: whiteColor),
                     image: DecorationImage(
-                      image: AssetImage('assets/user.jpg'),
+                      image: (photoURL != null && photoURL!.isNotEmpty)
+                          ? NetworkImage(photoURL!) as ImageProvider
+                          : const AssetImage('assets/user1.jpg'),
                       fit: BoxFit.cover,
                     ),
+
                   ),
                   child: Container(
                     height: 22.0,
@@ -462,12 +398,6 @@ class _EditProfileState extends State<EditProfile> {
                 child: getTile('Phone', phone),
               ),
               // Phone End
-              // Email Start
-              InkWell(
-                onTap: changeEmail,
-                child: getTile('Email', email),
-              ),
-              // Email End
             ],
           ),
         ],

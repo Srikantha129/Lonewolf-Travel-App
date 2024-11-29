@@ -165,7 +165,7 @@ class _ExploreState extends State<Explore> {
                           });
 
                           // Then show a snackbar.
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                             content: Text('Experience Removed from Favorite'),
                           ));
                         },

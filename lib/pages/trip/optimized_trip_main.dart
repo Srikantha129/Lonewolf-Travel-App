@@ -15,6 +15,7 @@ class OptimizedTripMain extends StatefulWidget {
   final int hours;
   final int minutes;
   final double distance;
+  final warning;
 
   const OptimizedTripMain({
     super.key,
@@ -26,6 +27,7 @@ class OptimizedTripMain extends StatefulWidget {
     required this.hours,
     required this.minutes,
     required this.distance,
+    required this.warning,
   });
 
   @override
@@ -58,7 +60,7 @@ class _OptimizedTripMainState extends State<OptimizedTripMain> {
     if (userEmail != null) {
       final docSnapshot = await FirebaseFirestore.instance
           .collection('personaljourneys')
-          .doc(widget.randomString)
+          .doc(userEmail)
           .get();
 
       if (docSnapshot.exists) {
@@ -160,6 +162,18 @@ class _OptimizedTripMainState extends State<OptimizedTripMain> {
                       Text('${widget.distance.toStringAsFixed(2)} km'),
                     ],
                   ),
+                      // Add warning if it exists
+                      if (widget.warning != null && widget.warning.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                        Text(
+                          '${widget.warning is List ? (widget.warning as List).join(', ') : widget.warning}',
+                          style: const TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        )
+                      ],
                 ],
               ),
             ),
@@ -189,20 +203,37 @@ class _OptimizedTripMainState extends State<OptimizedTripMain> {
                       children: [
                         Hero(
                           tag: journey.displayName,
-                          child: Container(
-                            width: 150.0,
-                            height: 200.0,
-                            decoration: BoxDecoration(
-                              image: DecorationImage(
-                                image: NetworkImage(
-                                    journey.photoUrls.isNotEmpty
-                                        ? journey.photoUrls.first
-                                        : 'default_image_url'), // Fallback image
-                                fit: BoxFit.cover,
+                            child: Container(
+                              width: 150.0,
+                              height: 200.0,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(15.0),
+                                image: DecorationImage(
+                                  image: NetworkImage(
+                                      journey.photoUrls.isNotEmpty
+                                          ? journey.photoUrls.first
+                                          : 'default_image_url'), // Default fallback if no photoUrls
+                                  fit: BoxFit.cover,
+                                ),
                               ),
-                              borderRadius: BorderRadius.circular(15.0),
-                            ),
-                          ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(15.0), // Rounded corners for the image
+                                child: Image.network(
+                                  journey.photoUrls.isNotEmpty
+                                      ? journey.photoUrls.first
+                                      : 'default_image_url', // Default URL if no photos available
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Image.asset(
+                                      journey.photoUrls.isNotEmpty
+                                          ? journey.photoUrls.first
+                                          : 'default_image_url', // Your fallback asset image
+                                      fit: BoxFit.cover,
+                                    );
+                                  },
+                                ),
+                              ),
+                            )
                         ),
                         heightSpace,
                         Row(

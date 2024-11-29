@@ -292,8 +292,8 @@ class ExperienceState extends State<Experience> {
                 height: 50.0,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(25.0),
-                  image: DecorationImage(
-                    image: AssetImage('assets/host.jpg'),
+                  image: const DecorationImage(
+                    image: AssetImage('assets/host1.jpg'),
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -527,7 +527,7 @@ class ExperienceState extends State<Experience> {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(35.0),
                   image: DecorationImage(
-                    image: AssetImage('assets/host.jpg'),
+                    image: AssetImage('assets/host1.jpg'),
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -538,12 +538,12 @@ class ExperienceState extends State<Experience> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Meet your host, Peter',
+                    'Meet your host, ${widget.experience.hostName.split(' ').first}',
                     style: blackBigBoldTextStyle,
                   ),
                   heightSpace,
                   Text(
-                    'Host on TravelPro since 2018',
+                    'Host on Lonewolf since 2024',
                     style: greySmallTextStyle,
                   ),
                 ],

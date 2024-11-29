@@ -89,7 +89,7 @@ class HomneState extends ConsumerState<Homne> {
                       image: DecorationImage(
                         image: photoURL != null
                             ? CachedNetworkImageProvider(photoURL!)
-                            : const AssetImage('assets/user.jpg') as ImageProvider,
+                            : const AssetImage('assets/user1.jpg') as ImageProvider,
                         fit: BoxFit.cover,
                       ),
                     ),

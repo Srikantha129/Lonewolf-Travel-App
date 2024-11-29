@@ -1,46 +1,35 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:lonewolf/models/travel_locations.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:lonewolf/constant/constant.dart';
+import 'package:lonewolf/pages/hotel/selectHotelDate.dart';
 import 'package:lonewolf/pages/related_place/related_place.dart';
 import 'package:lonewolf/pages/review/review.dart';
 import 'package:lonewolf/widget/carousel_pro/lib/carousel_pro.dart';
 import 'package:lonewolf/widget/column_builder.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:lonewolf/models/JourneyEntry.dart';
-import 'package:lonewolf/models/Location.dart';
-import 'package:lonewolf/services/journey_db_service.dart';
-import 'package:lonewolf/services/location_db_service.dart';
-import 'package:lonewolf/services/personal_journey_db_service.dart';
+import 'package:webview_flutter/webview_flutter.dart';
+import 'package:lonewolf/models/hotels.dart';
+
+import '../../models/JourneyEntry.dart';
+import '../../services/personal_journey_db_service.dart';
 
 
-class LocationDetails extends StatefulWidget {
+class HotelRoomInRoute extends StatefulWidget {
   //final String? title, imgPath, price;
-  final TravelLocation place;
-  final String randomString;
-  const LocationDetails(
+  final Hotel hotel;
+  const HotelRoomInRoute(
       {super.key,
-        required this.place,required this.randomString,});
+        required this.hotel,});
   @override
-  _LocationDetailsState createState() => _LocationDetailsState();
+  _HotelRoomInRouteState createState() => _HotelRoomInRouteState();
 }
 
-class _LocationDetailsState extends State<LocationDetails> {
+class _HotelRoomInRouteState extends State<HotelRoomInRoute> {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
   bool favorite = false;
   Set<Marker>? markers;
   String? userEmail;
-  int dayCount = 0;
-
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final LocationDbService _locationDbService = LocationDbService();
-  List<JourneyLocation> locations = [];
-  String? _selectedDay = '01';
-  Stream? _userJourney;
-  List<DropdownMenuItem<String>> _dayItems = [];
-
 
   final ratingList = [
     {
@@ -104,52 +93,18 @@ class _LocationDetailsState extends State<LocationDetails> {
   @override
   void initState() {
     super.initState();
-    _checkLoginStatus();
-    _fetchData();
     markers = Set.from([]);
+    _checkLoginStatus();
   }
-
-  /// Fetches journey and location data from the database.
-  Future<void> _fetchData() async {
-    locations = await _locationDbService.getLocations();
-    _userJourney = JourneyDbService().getJourneysByEmail(userEmail!);
-
-    _userJourney?.listen((snapshot) {
-      if (snapshot.docs.isNotEmpty) {
-        final journey = snapshot.docs.first.data();
-        final dateDifference =
-            journey.endDate.difference(journey.startDate).inDays;
-
-        setState(() {
-          _dayItems = _generateDayItems(dateDifference);
-          dayCount = dateDifference;
-
-        });
-      }
-    });
-  }
-
-  /// Generates dropdown items for selecting days based on the journey duration.
-  List<DropdownMenuItem<String>> _generateDayItems(int dateDifference) {
-    return List<DropdownMenuItem<String>>.generate(
-      dateDifference,
-          (index) {
-        final day = (index + 1).toString().padLeft(2, '0');
-        return DropdownMenuItem<String>(
-          value: day,
-          child: Text(day),
-        );
-      },
-    );
-  }
-
-  /// Checks the login status and retrieves the user's email.
   Future<void> _checkLoginStatus() async {
-    final prefs = await SharedPreferences.getInstance();
+    SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
       userEmail = prefs.getString('userEmail');
+      //displayName = prefs.getString('userName');
+      print('received userEmail: $userEmail');
     });
   }
+
   @override
   Widget build(BuildContext context) {
     double width = MediaQuery.of(context).size.width;
@@ -160,7 +115,7 @@ class _LocationDetailsState extends State<LocationDetails> {
         backgroundColor: whiteColor,
         elevation: 0.0,
         titleSpacing: 0.0,
-        title: Text(widget.place.displayName, style: appBarTextStyle),
+        title: Text(widget.hotel.name, style: appBarTextStyle),
         actions: [
           IconButton(
             icon: Icon((favorite) ? Icons.favorite : Icons.favorite_border),
@@ -186,77 +141,108 @@ class _LocationDetailsState extends State<LocationDetails> {
         child: Container(
           color: Colors.white,
           width: width,
-          height: 70.0,
+          height: 90.0, // Increased height to accommodate two rows
           padding: EdgeInsets.symmetric(horizontal: fixPadding * 2.0),
           alignment: Alignment.center,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: <Widget>[
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Price Information Row
               Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'From ${widget.place.priceRange}',
+                    'From \$${widget.hotel.avDates?.isNotEmpty == true ? (double.tryParse(widget.hotel.avDates!.first.values.first.toString())?.toStringAsFixed(1) ?? '70') : '70'}',
                     style: blackBigBoldTextStyle,
                   ),
-
-                  /*Text(
-                    ' / per ticket',
+                  Text(
+                    ' / per night',
                     style: blackSmallTextStyle,
-                  ),*/
+                  ),
                 ],
               ),
-              InkWell(
-                onTap: () {
-                  final journeyEntry = JourneyEntry(
-                    //day: _selectedDay ?? '01',
-                    //locationName: widget.place.displayName,
-                    displayName: widget.place.displayName,
-                    email: userEmail ?? 'default@example.com',
-                    description: widget.place.description,
-                    city: widget.place.city,
-                    openHours: widget.place.openHours,
-                    priceRange: widget.place.priceRange,
-                    userRating: widget.place.userRating,
-                    latitude: widget.place.latitude,
-                    longitude: widget.place.longitude,
-                    photoUrls: widget.place.photoUrls,
-                    dayCount: dayCount
+              SizedBox(height: 10.0), // Spacing between rows
+              // Buttons Row
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: InkWell(
+                      onTap: () {
+                        final journeyEntry = JourneyEntry(
+                          //day: _selectedDay ?? '01',
+                          //locationName: widget.place.displayName,
+                          displayName: widget.hotel.name,
+                          email: userEmail ?? 'default@example.com',
+                          description: widget.hotel.hotelDescription,
+                          city: widget.hotel.city,
+                          openHours: widget.hotel.city,
+                          priceRange: widget.hotel.avDates?.isNotEmpty == true ? (double.tryParse(widget.hotel.avDates!.first.values.first.toString())?.toStringAsFixed(1) ?? '70') : '70',
+                          userRating: widget.hotel.hotelClass.toDouble(),
+                          latitude: widget.hotel.latitude,
+                          longitude: widget.hotel.longitude,
+                          photoUrls: widget.hotel.photoUrls!,
+                          dayCount: widget.hotel.hotelClass,
+                        );
 
-                  );
+                        PersonalJourneyService().addJourney(
+                          userEmail!,
+                          journeyEntry.toFirestore(),
+                        );
 
-                  PersonalJourneyService().addJourney(
-                      userEmail!,
-                      journeyEntry.toFirestore());
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              '${widget.hotel.name} added to your trip!',
+                            ),
+                            behavior: SnackBarBehavior.floating,
+                            backgroundColor: Colors.green,
+                            duration: const Duration(seconds: 2),
+                          ),
+                        );
 
-                  ScaffoldMessenger.of(context)
-                      .showSnackBar(
-                    SnackBar(
-                      content: Text(
-                          '${widget.place.displayName} added to your trip!'),
-                      behavior: SnackBarBehavior.floating,
-                      backgroundColor: Colors.green,
-                      duration: const Duration(seconds: 2),
+                      },
+                      child: Container(
+                        padding: EdgeInsets.symmetric(vertical: fixPadding),
+                        margin: EdgeInsets.only(right: fixPadding),
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(15.0),
+                          color: Colors.green, // Button color for "Add to Route"
+                        ),
+                        child: Text(
+                          'Add to Route',
+                          style: whiteColorButtonTextStyle,
+                        ),
+                      ),
                     ),
-                  );
-                },
-                child: Container(
-                  padding: EdgeInsets.only(
-                      top: fixPadding,
-                      bottom: fixPadding,
-                      right: fixPadding * 2.0,
-                      left: fixPadding * 2.0),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(15.0),
-                    color: primaryColor,
                   ),
-                  child: Text(
-                    'Add to Route',
-                    style: whiteColorButtonTextStyle,
+                  Expanded(
+                    child: InkWell(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => WebViewPage(url: widget.hotel.url),
+                          ),
+                        );
+                      },
+                      child: Container(
+                        padding: EdgeInsets.symmetric(vertical: fixPadding),
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(15.0),
+                          color: primaryColor,
+                        ),
+                        child: Text(
+                          'Book now',
+                          style: whiteColorButtonTextStyle,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
             ],
           ),
@@ -265,7 +251,7 @@ class _LocationDetailsState extends State<LocationDetails> {
       body: ListView(
         children: [
           Hero(
-            tag: widget.place.displayName,
+            tag: widget.hotel.name,
             child: slider(),
           ),
 
@@ -317,7 +303,7 @@ class _LocationDetailsState extends State<LocationDetails> {
       height: height / 2.3,
       width: width,
       child: Carousel(
-        images: (widget.place.photoUrls.take(4).map((url) => NetworkImage(url)).toList()) ?? [],
+        images: (widget.hotel.photoUrls?.take(4).map((url) => AssetImage(url)).toList()) ?? [],
         dotSize: 6.0,
         dotSpacing: 18.0,
         dotColor: primaryColor,
@@ -342,7 +328,7 @@ class _LocationDetailsState extends State<LocationDetails> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            widget.place.displayName,
+            widget.hotel.name,
             style: blackHeadingTextStyle,
           ),
           heightSpace,
@@ -353,7 +339,7 @@ class _LocationDetailsState extends State<LocationDetails> {
               Icon(Icons.star, color: Colors.lime[600], size: 18.0),
               const SizedBox(width: 5.0),
               Text(
-                '${widget.place.userRating}',
+                '5.0',
                 style: blackSmallTextStyle,
               ),
               const SizedBox(width: 3.0),
@@ -363,7 +349,7 @@ class _LocationDetailsState extends State<LocationDetails> {
               ),
               widthSpace,
               Text(
-                '${widget.place.city}, lk',
+                '${widget.hotel.city}, ${widget.hotel.country}',
                 style: primaryColorSmallTextStyle,
               ),
             ],
@@ -466,7 +452,7 @@ class _LocationDetailsState extends State<LocationDetails> {
           ),
           heightSpace,
           Text(
-            widget.place.description,
+            widget.hotel.hotelDescription,
             style: greySmallTextStyle,
             textAlign: TextAlign.justify,
           ),
@@ -595,13 +581,13 @@ class _LocationDetailsState extends State<LocationDetails> {
                 onMapCreated: (GoogleMapController controller) {
                   Marker m = Marker(
                       markerId: const MarkerId('1'),
-                      position: LatLng(widget.place.latitude, widget.place.longitude));
+                      position: LatLng(widget.hotel.latitude, widget.hotel.longitude));
                   setState(() {
                     markers!.add(m);
                   });
                 },
                 initialCameraPosition: CameraPosition(
-                    target: LatLng(widget.place.latitude, widget.place.longitude), zoom: 8),
+                    target: LatLng(widget.hotel.latitude, widget.hotel.longitude), zoom: 8),
               ),
             ),
           ),
@@ -784,6 +770,27 @@ class _LocationDetailsState extends State<LocationDetails> {
           size: 18.0,
         ),
       ],
+    );
+  }
+}
+
+class WebViewPage extends StatelessWidget {
+  final String url;
+
+  const WebViewPage({super.key, required this.url});
+
+  @override
+  Widget build(BuildContext context) {
+    print('Loading URL in WebViewPage: $url');
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Booking Page'),
+      ),
+      body: WebViewWidget(controller: WebViewController()
+        ..setJavaScriptMode(JavaScriptMode.unrestricted)
+        ..loadRequest(Uri.parse(url))),
+      //..loadRequest(Uri.parse('https://www.google.com'))),
+
     );
   }
 }

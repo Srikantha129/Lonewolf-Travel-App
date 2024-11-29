@@ -16,14 +16,14 @@ class _NotificationsState extends State<Notifications> {
     },
     {
       'type': 'offer',
-      'title': '25% Off use code TravelPro25',
+      'title': '25% Off use code Lonewolf25',
       'desc':
-          'Use code TravelPro25 for your booking between 20th sept to 25th sept and get 25% off.'
+          'Use code Lonewolf25 for your booking between 20th sept to 25th sept and get 25% off.'
     },
     {
       'type': 'offer',
       'title': 'Flat \$10 Off',
-      'desc': 'Use code Travel10 and get \$10 off on your booking.'
+      'desc': 'Use code Lonewolf210 and get \$10 off on your booking.'
     }
   ];
   @override

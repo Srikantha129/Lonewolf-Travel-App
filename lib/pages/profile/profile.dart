@@ -266,7 +266,7 @@ class _ProfileState extends State<Profile> {
                   child: getTile(
                       Icon(Icons.account_balance_wallet,
                           color: Colors.grey.withOpacity(0.6)),
-                      'TravelPro Cash'),
+                      'Lonewolf Cash'),
                 ),
                 InkWell(
                   onTap: () {},

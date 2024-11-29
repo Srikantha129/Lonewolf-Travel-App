@@ -12,6 +12,7 @@ import 'dart:convert';
 import 'dart:convert';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
+import 'package:lonewolf/services/personal_journey_db_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 
@@ -22,6 +23,7 @@ class TripHome extends StatefulWidget {
 
 class _TripHomeState extends State<TripHome> {
   String? userEmail;
+  final personalJourneyService = PersonalJourneyService();
   @override
   void initState() {
     super.initState();
@@ -94,47 +96,87 @@ class _TripHomeState extends State<TripHome> {
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          title: const Text(
-            'Delete Current Journey?',
-            style: TextStyle(fontWeight: FontWeight.bold),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Row(
+            children: [
+              Icon(Icons.warning_amber_outlined, color: Colors.orange, size: 30),
+              SizedBox(width: 10),
+              Text(
+                'Delete or Update Journey?',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              ),
+            ],
           ),
           content: const Text(
-            'This action is irreversible. Are you sure you want to proceed?',
+            'Do you want to delete the existing journey and create a new one, or just update the existing one?',
             style: TextStyle(fontSize: 16),
           ),
           actions: [
+            // Update Existing Journey Button (Top)
             TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text(
-                'Cancel',
-                style: TextStyle(color: Colors.grey),
-              ),
-            ),
-            TextButton(
-              onPressed: () async {
-                // Perform delete action
-                await JourneyDbService()
-                    .deleteJourneyByEmail(userEmail!);
-
-                // Close dialog and navigate
+              onPressed: () {
+                // Close dialog and navigate to the next page to update the journey
                 Navigator.of(context).pop();
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(
-                    builder: (context) =>
-                        const PersonalizeRoute(/*loggedUser: userEmail!*/),
+                    builder: (context) => const PersonalizeRoute(), // Ensure this is the correct route
                   ),
                 );
               },
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.blue, padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+              ),
               child: const Text(
-                'Delete',
-                style: TextStyle(color: Colors.red),
+                'Update Existing Journey',
+                style: TextStyle(fontSize: 16),
+              ),
+            ),
+            // Option to delete and create new journey
+            TextButton(
+              onPressed: () async {
+                // Create an instance of PersonalJourneyService
+                final personalJourneyService = PersonalJourneyService();
+
+                // Perform delete action
+                await personalJourneyService.deleteUserJourneyDocument(userEmail!);
+
+                // Close dialog and navigate to the new journey creation page (or next page)
+                Navigator.of(context).pop();
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const PersonalizeRoute(), // Ensure this is the correct route
+                  ),
+                );
+              },
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.red, padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+              ),
+              child: const Text(
+                'Delete and Create New',
+                style: TextStyle(fontSize: 16),
+              ),
+            ),
+            // Cancel Button (Bottom)
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.grey, padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+              ),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(fontSize: 16),
               ),
             ),
           ],
         ),
       );
     }
+
+
 
     double height = MediaQuery.of(context).size.height;
     double width = MediaQuery.of(context).size.width;
@@ -214,14 +256,15 @@ class _TripHomeState extends State<TripHome> {
               InkWell(
                 borderRadius: BorderRadius.circular(10.0),
                 onTap: () async {
-                  bool journeyExists = await JourneyDbService()
-                      .isExistsByEmail(userEmail!);
+                  bool journeyExists = await PersonalJourneyService().isExistsByEmail(userEmail!);
                   print(journeyExists);
                   print(userEmail);
 
                   if (journeyExists) {
+                    // If journey exists, show the delete/update dialog
                     _showDeleteDialog();
                   } else {
+                    // If no journey exists, navigate to the personalization route
                     Navigator.push(
                       context,
                       PageTransition(

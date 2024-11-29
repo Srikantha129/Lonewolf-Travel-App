@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:lonewolf/pages/places/recommended_for_route.dart';
 import 'package:lonewolf/pages/trip/optimized_trip_main.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:lonewolf/constant/constant.dart';
@@ -91,7 +92,7 @@ class _TripMainState extends State<TripMain> {
       // Query Firestore to get the document where the document ID is widget.randomString
       final docSnapshot = await FirebaseFirestore.instance
           .collection('personaljourneys')
-          .doc(widget.randomString) // Use the randomString as the document ID
+          .doc(userEmail) // Use the randomString as the document ID
           .get();
 
       // Check if the document exists
@@ -139,7 +140,7 @@ class _TripMainState extends State<TripMain> {
           //popularDestination(),
           // Popular Destination End
           // Recommended Start
-          const Recommended(),
+          const RecommendedForRoute(),
           // Recommended End
         ],
       ),
@@ -479,16 +480,28 @@ class _TripMainState extends State<TripMain> {
                           width: 150.0,
                           height: 200.0,
                           decoration: BoxDecoration(
-                            image: DecorationImage(
-                              image: NetworkImage(
-                                  journey.photoUrls.isNotEmpty
-                                      ? journey.photoUrls.first
-                                      : 'default_image_url'), // Fallback image
-                              fit: BoxFit.cover,
-                            ),
                             borderRadius: BorderRadius.circular(15.0),
                           ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(15.0), // Ensures rounded corners for the image
+                            child: Image.network(
+                              journey.photoUrls.isNotEmpty
+                                  ? journey.photoUrls.first
+                                  : 'default_image_url', // Default URL if no photos available
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                // Fallback to an AssetImage if the NetworkImage fails
+                                return Image.asset(
+                                  journey.photoUrls.isNotEmpty
+                                      ? journey.photoUrls.first
+                                      : 'default_image_url', // Replace with your fallback image path
+                                  fit: BoxFit.cover,
+                                );
+                              },
+                            ),
+                          ),
                         ),
+
                       ),
                       heightSpace,
                       Row(
@@ -891,6 +904,8 @@ class _TripMainState extends State<TripMain> {
               hours:hours,
               minutes:minutes,
               distance:distanceInKm,
+              warning: warnings,
+
             ),
           ),
         );

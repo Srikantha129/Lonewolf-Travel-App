@@ -13,10 +13,10 @@ class HotelList extends ConsumerStatefulWidget {
   const HotelList({super.key});
 
   @override
-  _HotelListState createState() => _HotelListState();
+  HotelListState createState() => HotelListState();
 }
 
-class _HotelListState extends ConsumerState<HotelList> {
+class HotelListState extends ConsumerState<HotelList> {
   final TextEditingController searchController = TextEditingController();
   String searchQuery = '';
 

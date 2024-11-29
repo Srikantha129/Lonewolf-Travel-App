@@ -15,7 +15,35 @@ class PersonalJourneyService {
       print('Error adding journey: $e');
     }
   }
+
+  // Delete the entire document for the user's email
+  Future<void> deleteUserJourneyDocument(String email) async {
+    try {
+      await _firestore
+          .collection('personaljourneys')
+          .doc(email)
+          .delete();
+      print('Document deleted successfully for $email');
+    } catch (e) {
+      print('Error deleting document: $e');
+    }
+  }
+
+  Future<bool> isExistsByEmail(String email) async {
+    try {
+      final docSnapshot = await _firestore
+          .collection('personaljourneys')
+          .doc(email)
+          .get();
+
+      return docSnapshot.exists; // Returns true if the document exists
+    } catch (e) {
+      print('Error checking document existence: $e');
+      return false; // In case of error, return false
+    }
+  }
 }
+
 
 
 
