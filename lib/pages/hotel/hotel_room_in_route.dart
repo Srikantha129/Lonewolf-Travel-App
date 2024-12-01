@@ -33,60 +33,60 @@ class _HotelRoomInRouteState extends State<HotelRoomInRoute> {
 
   final ratingList = [
     {
-      'name': 'Ersel',
+      'name': 'Pasan',
       'image': 'assets/user/user_1.jpg',
       'rating': 5,
       'review': 'Everthing was ok and the location is nice.',
-      'time': 'August 2020'
+      'time': 'August 2024'
     },
     {
-      'name': 'Jane',
+      'name': 'Kavindu',
       'image': 'assets/user/user_2.jpg',
       'rating': 5,
       'review': 'Great spot!',
-      'time': 'August 2020'
+      'time': 'August 2024'
     },
     {
-      'name': 'Apollonia',
+      'name': 'Tharani',
       'image': 'assets/user/user_3.jpg',
       'rating': 5,
       'review': 'Awesome place.',
-      'time': 'July 2020'
+      'time': 'July 2024'
     },
     {
-      'name': 'Beatriz',
+      'name': 'Dewmi',
       'image': 'assets/user/user_4.jpg',
       'rating': 5,
       'review': 'Really nice!',
-      'time': 'June 2020'
+      'time': 'June 2024'
     },
     {
-      'name': 'Linnea',
+      'name': 'Nimsara',
       'image': 'assets/user/user_5.jpg',
       'rating': 5,
       'review': 'Fabulous place.',
-      'time': 'May 2020'
+      'time': 'May 2024'
     },
     {
-      'name': 'Ronan',
+      'name': 'Shehan',
       'image': 'assets/user/user_6.jpg',
       'rating': 5,
       'review': 'Fantastic.',
-      'time': 'April 2020'
+      'time': 'April 2024'
     },
     {
-      'name': 'Brayden',
+      'name': 'Gayan',
       'image': 'assets/user/user_7.jpg',
       'rating': 5,
       'review': 'Must visit.',
-      'time': 'Fabruary 2020'
+      'time': 'Fabruary 2024'
     },
     {
-      'name': 'Hugo',
+      'name': 'Deshan',
       'image': 'assets/user/user_8.jpg',
-      'rating': 5,
+      'rating': 4.5,
       'review': 'It\'s clean and nice.',
-      'time': 'January 2020'
+      'time': 'January 2024'
     }
   ];
 
@@ -278,9 +278,6 @@ class _HotelRoomInRouteState extends State<HotelRoomInRoute> {
           // Review Start
           review(),
           // Review End
-          // Related Places Start
-          RelatedPlaces(),
-          // Related Places End
         ],
       ),
     );

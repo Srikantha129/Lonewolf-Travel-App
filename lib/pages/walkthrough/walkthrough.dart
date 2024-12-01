@@ -76,23 +76,23 @@ class WalkThroughState extends State<WalkThrough> {
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               Text(
-                                'The',
+                                'Escape',
                                 style: walkthroughWhiteBigTextStyle,
                               ),
                               const SizedBox(width: 7.0),
                               Text(
-                                'best travel',
+                                'The Ordinary',
                                 style: walkthroughPrimaryColorBigTextStyle,
                               ),
                             ],
                           ),
                           Text(
-                            'in the world',
+                            'with LoneWolf',
                             style: walkthroughWhiteBigTextStyle,
                           ),
                           const SizedBox(height: 20.0),
                           Text(
-                            'lives without limits the world is made to explore and appreciate its beauty',
+                            "Pack your bags and chase sunsets in a new land. \nAdventure awaits - are you ready?",
                             style: walkrhroughWhiteSmallTextStyle,
                           ),
                         ],

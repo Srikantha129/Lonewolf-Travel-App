@@ -282,7 +282,7 @@ class _LocationDetailsState extends State<LocationDetails> {
           // About this place end
           divider(),
           // Sleeping Arrangement Start
-          sleepingArrangement(),
+          //sleepingArrangement(),
           // Sleeping Arrangement End
           divider(),
           // Location Start
@@ -293,7 +293,7 @@ class _LocationDetailsState extends State<LocationDetails> {
           review(),
           // Review End
           // Related Places Start
-          RelatedPlaces(),
+          //RelatedPlaces(),
           // Related Places End
         ],
       ),

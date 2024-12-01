@@ -15,6 +15,7 @@ class OptimizedTripMain extends StatefulWidget {
   final int hours;
   final int minutes;
   final double distance;
+  final String googleMapsUrl;
   final warning;
 
   const OptimizedTripMain({
@@ -28,6 +29,7 @@ class OptimizedTripMain extends StatefulWidget {
     required this.minutes,
     required this.distance,
     required this.warning,
+    required this.googleMapsUrl,
   });
 
   @override
@@ -98,7 +100,7 @@ class _OptimizedTripMainState extends State<OptimizedTripMain> {
         backgroundColor: Colors.teal,
         elevation: 0,
         centerTitle: true,
-        title: Text(
+        title: const Text(
           'Your Trip',
           style: TextStyle(
             fontSize: 20,
@@ -134,7 +136,7 @@ class _OptimizedTripMainState extends State<OptimizedTripMain> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  const Text(
                     'Trip Summary',
                     style: TextStyle(
                       fontSize: 18,
@@ -150,14 +152,14 @@ class _OptimizedTripMainState extends State<OptimizedTripMain> {
                   const Divider(height: 16),
                   Row(
                     children: [
-                      Icon(Icons.access_time, color: Colors.teal, size: 20),
+                      const Icon(Icons.access_time, color: Colors.teal, size: 20),
                       const SizedBox(width: 8),
                       Text('${widget.hours} hrs ${widget.minutes} mins'),
                     ],
                   ),
                   Row(
                     children: [
-                      Icon(Icons.map, color: Colors.teal, size: 20),
+                      const Icon(Icons.map, color: Colors.teal, size: 20),
                       const SizedBox(width: 8),
                       Text('${widget.distance.toStringAsFixed(2)} km'),
                     ],
@@ -180,7 +182,7 @@ class _OptimizedTripMainState extends State<OptimizedTripMain> {
             const SizedBox(height: 20),
 
             // Travel Destinations Section
-            Text(
+            const Text(
               'Your Travel Destinations',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.teal),
             ),
@@ -273,6 +275,8 @@ class _OptimizedTripMainState extends State<OptimizedTripMain> {
                     builder: (context) => OptimizedRouteMapPage(
                       routePoints: widget.routePoints,
                       markers: widget.markers,
+                      googleMapsUrl:widget.googleMapsUrl,
+
                     ),
                   ),
                 );

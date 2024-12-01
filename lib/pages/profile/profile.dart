@@ -10,6 +10,8 @@ import 'package:lonewolf/pages/profile/edit_profile.dart';
 import 'package:lonewolf/pages/wallet/wallet.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../support/support.dart';
+
 class Profile extends StatefulWidget {
   const Profile({super.key});
 
@@ -168,7 +170,9 @@ class _ProfileState extends State<Profile> {
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(5.0),
                           image: DecorationImage(
-                            image: NetworkImage(photoURL!),
+                            image: photoURL != null && photoURL!.isNotEmpty
+                                ? NetworkImage(photoURL!)
+                                : const AssetImage('assets/user1.jpg') as ImageProvider,
                             fit: BoxFit.cover,
                           ),
                         ),
@@ -178,7 +182,7 @@ class _ProfileState extends State<Profile> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
                           Text(
-                            '$displayName',
+                            displayName ?? 'User',
                             style: blackBigTextStyle,
                           ),
                           heightSpace,
@@ -228,19 +232,19 @@ class _ProfileState extends State<Profile> {
                           color: Colors.grey.withOpacity(0.6)),
                       'Notifications'),
                 ),
-                InkWell(
+                /*InkWell(
                   onTap: () {},
                   child: getTile(
                       Icon(Icons.language, color: Colors.grey.withOpacity(0.6)),
                       'Language'),
-                ),
+                ),*/
                 InkWell(
                   onTap: () {},
                   child: getTile(
                       Icon(Icons.settings, color: Colors.grey.withOpacity(0.6)),
                       'Settings'),
                 ),
-                InkWell(
+                /*InkWell(
                   onTap: () {
                     Navigator.push(
                         context,
@@ -267,9 +271,14 @@ class _ProfileState extends State<Profile> {
                       Icon(Icons.account_balance_wallet,
                           color: Colors.grey.withOpacity(0.6)),
                       'Lonewolf Cash'),
-                ),
+                ),*/
                 InkWell(
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const SupportPage()),
+                    );
+                  },
                   child: getTile(
                       Icon(Icons.headset_mic,
                           color: Colors.grey.withOpacity(0.6)),

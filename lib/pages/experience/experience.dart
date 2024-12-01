@@ -301,7 +301,7 @@ class ExperienceState extends State<Experience> {
             ],
           ),
           heightSpace,
-          experienceInfoTile('assets/icons/clock.png', '${widget.experience.duration} mins'),
+          experienceInfoTile('assets/icons/clock.png', '${widget.experience.duration} '),
           heightSpace,
           experienceInfoTile('assets/icons/tag.png', 'Includes equipment'),
           heightSpace,
@@ -567,7 +567,7 @@ class ExperienceState extends State<Experience> {
           ),
           heightSpace,
           Text(
-            'Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.',
+            widget.experience.hostId,
             style: greySmallTextStyle,
             textAlign: TextAlign.justify,
           ),
@@ -628,14 +628,14 @@ class ExperienceState extends State<Experience> {
                   // Add marker after map is created
                   Marker m = const Marker(
                     markerId: MarkerId('1'),
-                    position: LatLng(47.4517861, 18.973275), // Example marker
+                    position: LatLng(7.053194240881029, 80.82297184597921), // Example marker
                   );
                   setState(() {
                     markers.add(m); // Add the marker to the set
                   });
                 },
                 initialCameraPosition: const CameraPosition(
-                  target: LatLng(47.4517861, 18.973275), // Your initial position
+                  target: LatLng(7.053194240881029, 80.82297184597921), // Your initial position
                   zoom: 8,
                 ),
               ),

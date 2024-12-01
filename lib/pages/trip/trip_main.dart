@@ -147,31 +147,6 @@ class _TripMainState extends State<TripMain> {
     );
   }
 
-  slider() {
-    double width = MediaQuery.of(context).size.width;
-    return SizedBox(
-      height: 230.0,
-      width: width,
-      child: Carousel(
-        images: [
-          ExactAssetImage('assets/trips/mount-fuji.jpg'),
-          ExactAssetImage('assets/trips/swiss-alps.jpg'),
-          ExactAssetImage('assets/trips/grand-teton.jpg'),
-        ],
-        dotSize: 6.0,
-        dotSpacing: 18.0,
-        dotColor: primaryColor,
-        indicatorBgPadding: 5.0,
-        dotBgColor: Colors.transparent,
-        borderRadius: false,
-        moveIndicatorFromBottom: 180.0,
-        noRadiusForIndicator: true,
-        overlayShadow: true,
-        overlayShadowColors: Colors.white,
-        overlayShadowSize: 0.7,
-      ),
-    );
-  }
 
  /* Widget mustVisit() {
     double width = MediaQuery.of(context).size.width;
@@ -905,6 +880,7 @@ class _TripMainState extends State<TripMain> {
               minutes:minutes,
               distance:distanceInKm,
               warning: warnings,
+              googleMapsUrl:googleMapsUrl,
 
             ),
           ),

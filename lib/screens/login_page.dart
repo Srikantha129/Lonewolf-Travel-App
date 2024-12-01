@@ -308,6 +308,9 @@ class _LoginPageState extends State<LoginPage> {
         await prefs.setString('userName', userCredential.user!.displayName ?? '');
         await prefs.setString('userPhotoURL', userCredential.user!.photoURL ?? '');
         await prefs.setString('userId', userCredential.user!.uid ?? '');
+        print('Saved userEmail: ${userCredential.user?.email!}');
+        print('Saved userName: ${userCredential.user?.displayName ?? ''}');
+        print('Saved photoURL: ${userCredential.user?.photoURL ?? ''}');
       }
 
     } on FirebaseAuthException catch (error) {

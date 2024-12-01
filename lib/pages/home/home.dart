@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
@@ -10,11 +11,13 @@ import 'package:lonewolf/pages/profile/profile.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lonewolf/providers/popular_experiences_provider.dart';
+import '../../models/popular_experiences.dart';
 import '../../models/popular_places.dart';
 import 'package:lonewolf/constant/static_lists.dart';
 import 'package:lonewolf/providers/popular_places_provider.dart';
 
 import '../experience/addexperience.dart';
+import '../places/recommended_for_home.dart';
 
 
 
@@ -28,6 +31,11 @@ class Homne extends ConsumerStatefulWidget {
 class HomneState extends ConsumerState<Homne> {
   String? photoURL;
   String? displayName;
+  String searchQuery = '';
+  List<PopularPlace> filteredPlaces = [];
+  List<PopularExperience> filteredExperiences = [];
+  Timer? _debounce;
+
 
   @override
   void initState() {
@@ -41,6 +49,30 @@ class HomneState extends ConsumerState<Homne> {
       photoURL = prefs.getString('userPhoto');
       displayName = prefs.getString('userName');
       print('received photourl: $photoURL');
+    });
+  }
+
+  void filterSearchResults(String query) {
+    setState(() {
+      searchQuery = query.toLowerCase();
+
+      // Filter places
+      final allPlaces = ref.read(popularPlacesProvider).value ?? [];
+      filteredPlaces = allPlaces
+          .where((place) => place.name.toLowerCase().contains(searchQuery))
+          .toList();
+
+      // Filter experiences
+      final allExperiences = ref.read(popularExperiencesProvider).value ?? [];
+      filteredExperiences = allExperiences
+          .where((experience) => experience.name.toLowerCase().contains(searchQuery))
+          .toList();
+    });
+  }
+  void onSearchChanged(String query) {
+    if (_debounce?.isActive ?? false) _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 300), () {
+      filterSearchResults(query);
     });
   }
 
@@ -111,33 +143,80 @@ class HomneState extends ConsumerState<Homne> {
               border: Border.all(width: 1.0, color: greyColor.withOpacity(0.6)),
             ),
             child: TextField(
+              onChanged: onSearchChanged,
               decoration: InputDecoration(
                 hintText: 'Search city, hotel, etc',
                 hintStyle: greyNormalTextStyle,
                 prefixIcon: const Icon(Icons.search),
                 border: InputBorder.none,
                 contentPadding: EdgeInsets.only(
-                    top: fixPadding * 0.78, bottom: fixPadding * 0.78),
+                  top: fixPadding * 0.78,
+                  bottom: fixPadding * 0.78,
+                ),
               ),
             ),
           ),
           // Search End
-          // Popular Places Start
-          popularPlaces(),
-          // Popular Places End
-          heightSpace,
-          heightSpace,
-          // Popular Experiences Start
-          popularExperiences(),
-          // Popular Experiences End
-          heightSpace,
+
+
+          // Display filtered results or default lists
+          searchQuery.isEmpty
+              ? Column(
+            children: [
+              popularPlaces(),
+              heightSpace,
+              heightSpace,
+              popularExperiences(),
+
+            ],
+          )
+              : Column(
+            children: [
+              if (filteredPlaces.isNotEmpty)
+                Text('Places matching "$searchQuery"', style: blackHeadingTextStyle),
+              ...filteredPlaces.map((place) => ListTile(
+                title: Text(place.name),
+                subtitle: Text(place.property),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    PageTransition(
+                      type: PageTransitionType.fade,
+                      child: Place(
+                        title: place.name,
+                        images: place.images,
+                        description: place.description,
+                        category: place.category,
+                      ),
+                    ),
+                  );
+                },
+              )),
+              if (filteredExperiences.isNotEmpty)
+                Text('Experiences matching "$searchQuery"', style: blackHeadingTextStyle),
+              ...filteredExperiences.map((experience) => ListTile(
+                title: Text(experience.name),
+                subtitle: Text('${experience.type} - \$${experience.price}/person'),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    PageTransition(
+                      type: PageTransitionType.fade,
+                      child: Experience(experience: experience),
+                    ),
+                  );
+                },
+              )),
+            ],
+          ),
           // Recommended Start
-          Recommended(),
+          RecommendedForHome(searchQuery: searchQuery),
           // Recommended End
         ],
       ),
     );
   }
+
 
   popularPlaces() {
     double width = MediaQuery.of(context).size.width;
@@ -318,12 +397,12 @@ class HomneState extends ConsumerState<Homne> {
                                     );
                                   } catch (e) {
                                     // If base64 also fails, display an error icon
-                                    return Icon(Icons.broken_image, size: 50, color: Colors.red);
+                                    return const Icon(Icons.broken_image, size: 50, color: Colors.red);
                                   }
                                 },
                               ),
                             )
-                                : Icon(Icons.image, size: 50, color: Colors.grey), // Placeholder if no image
+                                : const Icon(Icons.image, size: 50, color: Colors.grey), // Placeholder if no image
                           ),
                           heightSpace,
                           Column(
@@ -336,18 +415,18 @@ class HomneState extends ConsumerState<Homne> {
                                   //Text(item.rating.toString(), style: blackSmallTextStyle),
                                 ],
                               ),*/
-                              SizedBox(height: 5.0),
+                              const SizedBox(height: 5.0),
                               Text(
                                 item.name,
                                 style: blackBigTextStyle,
                                 maxLines: 2,
                               ),
-                              SizedBox(height: 5.0),
+                              const SizedBox(height: 5.0),
                               Text(
                                 item.type,
                                 style: greyNormalTextStyle,
                               ),
-                              SizedBox(height: 5.0),
+                              const SizedBox(height: 5.0),
                               Text(
                                 'From \$${item.price}/person',
                                 style: blackSmallTextStyle,
